@@ -1,0 +1,84 @@
+export interface TMTBarData {
+  LOCATION?: string;
+  BUNDLE_NOS: number;
+  PQD: string;
+  UNIT: string;
+  TIME1: string;
+  LENGTH: string;
+  HEAT_NO: string;
+  PRODUCT_HEADING: string;
+  ISI_BOTTOM: string;
+  ISI_TOP: string;
+  CHARGE_DTM: string;
+  MILL: string;
+  GRADE: string;
+  URL_APIKEY: string;
+  ID?: string;
+  WEIGHT?: string;
+  SECTION: string;
+  DATE1: string;
+}
+
+export interface TMTBarLabel {
+  id: string;
+  label_id: string;
+  location?: string;
+  bundle_nos: number;
+  pqd: string;
+  unit: string;
+  time1: string;
+  length: string;
+  heat_no: string;
+  product_heading: string;
+  isi_bottom: string;
+  isi_top: string;
+  charge_dtm: string;
+  mill: string;
+  grade: string;
+  url_apikey: string;
+  weight?: string;
+  section: string;
+  date1: string;
+  printed_at?: string;
+  user_id: string;
+  status: 'pending' | 'printed' | 'failed';
+  zpl_content?: string;
+  qr_code?: string;
+  is_duplicate: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TMTBarBatchRequest {
+  labels: TMTBarData[];
+}
+
+export interface TMTBarBatchResponse {
+  new_labels: TMTBarLabel[];
+  duplicate_labels: TMTBarLabel[];
+  total_processed: number;
+  new_count: number;
+  duplicate_count: number;
+}
+
+export interface TMTBarFilter {
+  status?: string;
+  grade?: string;
+  section?: string;
+  heat_no?: string;
+  is_duplicate?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export interface TMTBarStats {
+  total_labels: number;
+  printed_labels: number;
+  pending_labels: number;
+  failed_labels: number;
+  duplicate_labels: number;
+  total_print_jobs: number;
+  failed_print_jobs: number;
+  by_grade: Record<string, number>;
+  by_section: Record<string, number>;
+} 
