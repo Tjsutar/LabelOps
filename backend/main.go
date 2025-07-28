@@ -32,8 +32,14 @@ func main() {
 	// Create Gin router
 	r := gin.Default()
 
-	// CORS middleware
-	r.Use(cors.Default())
+	// CORS middleware - More permissive for development
+	r.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+		Debug:            true,
+	}))
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {

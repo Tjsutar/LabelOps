@@ -1,10 +1,12 @@
 package utils
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
-	"database/sql"
+	"strings"
 
 	"labelops-backend/db"
 	"labelops-backend/models"
@@ -106,8 +108,8 @@ func GetAuditLogs(c *gin.Context) {
 	for rows.Next() {
 		var (
 			id, userID, action, resource, resourceID, details, ipAddress, userAgent string
-			createdAt sql.NullTime
-			userEmail, firstName, lastName sql.NullString
+			createdAt                                                               sql.NullTime
+			userEmail, firstName, lastName                                          sql.NullString
 		)
 
 		err := rows.Scan(
@@ -184,8 +186,50 @@ func ExportAuditLogsCSV(c *gin.Context) {
 }
 
 // generateAuditLogsCSV generates CSV data for audit logs
-func generateAuditLogsCSV(rows interface{}) string {
-	// This would be implemented to convert database rows to CSV format
-	// For now, returning a placeholder
-	return "Action,Resource,Resource ID,Details,IP Address,Created At,User Email,User Name\n"
+func generateAuditLogsCSV(rows *sql.Rows) string {
+	var csvBuilder strings.Builder
+	csvBuilder.WriteString("Action,Resource,Resource ID,Details,IP Address,Created At,User Email,User Name\n")
+
+	for rows.Next() {
+		var (
+			action, resource, resourceID, details, ipAddress string
+			createdAt                                        sql.NullTime
+			userEmail, firstName, lastName                   sql.NullString
+		)
+
+		err := rows.Scan(
+			&action, &resource, &resourceID, &details, &ipAddress,
+			&createdAt, &userEmail, &firstName, &lastName,
+		)
+		if err != nil {
+			continue
+		}
+
+		// Escape CSV values
+		action = strings.ReplaceAll(action, `"`, `""`)
+		resource = strings.ReplaceAll(resource, `"`, `""`)
+		details = strings.ReplaceAll(details, `"`, `""`)
+
+		userName := ""
+		if firstName.Valid && lastName.Valid {
+			userName = firstName.String + " " + lastName.String
+		}
+		userName = strings.ReplaceAll(userName, `"`, `""`)
+
+		email := ""
+		if userEmail.Valid {
+			email = userEmail.String
+		}
+		email = strings.ReplaceAll(email, `"`, `""`)
+
+		createdAtStr := ""
+		if createdAt.Valid {
+			createdAtStr = createdAt.Time.Format("2006-01-02 15:04:05")
+		}
+
+		csvBuilder.WriteString(fmt.Sprintf(`"%s","%s","%s","%s","%s","%s","%s","%s"`+"\n",
+			action, resource, resourceID, details, ipAddress, createdAtStr, email, userName))
+	}
+
+	return csvBuilder.String()
 }

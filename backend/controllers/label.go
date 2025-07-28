@@ -3,8 +3,11 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"labelops-backend/db"
 	"labelops-backend/models"
@@ -543,77 +546,155 @@ func BatchLabelProcess(c *gin.Context) {
 
 // GetLabels retrieves labels with filtering
 func GetLabels(c *gin.Context) {
-	user, _ := c.Get("user")
-	userModel := user.(models.User)
+	// Safely get user from context
+	userInterface, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found in context"})
+		return
+	}
 
-	// Parse query parameters
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	userModel, ok := userInterface.(models.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user type in context"})
+		return
+	}
+
+	// Parse query parameters with defaults
+	limit := 50
+	if limitStr := c.DefaultQuery("limit", "50"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	offset := 0
+	if offsetStr := c.DefaultQuery("offset", "0"); offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
+			offset = o
+		}
+	}
+
 	status := c.Query("status")
 	grade := c.Query("grade")
 	section := c.Query("section")
 
-	// Build query
+	// Build base query
 	query := `SELECT id, label_id, location, bundle_nos, pqd, unit, time1, length, 
 			  heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
 			  url_apikey, weight, section, date1, printed_at, user_id, status, 
 			  zpl_content, qr_code, is_duplicate, created_at, updated_at 
 			  FROM labels WHERE 1=1`
-	args := []interface{}{}
+
+	var args []interface{}
 	argCount := 1
 
-	// Add filters
+	// Add filters safely
 	if status != "" {
-		query += " AND status = $" + strconv.Itoa(argCount)
+		query += fmt.Sprintf(" AND status = $%d", argCount)
 		args = append(args, status)
 		argCount++
 	}
 	if grade != "" {
-		query += " AND grade = $" + strconv.Itoa(argCount)
+		query += fmt.Sprintf(" AND grade = $%d", argCount)
 		args = append(args, grade)
 		argCount++
 	}
 	if section != "" {
-		query += " AND section = $" + strconv.Itoa(argCount)
+		query += fmt.Sprintf(" AND section = $%d", argCount)
 		args = append(args, section)
 		argCount++
 	}
 
 	// Add user filter for non-admin users
-	if userModel.Role != "admin" {
-		query += " AND user_id = $" + strconv.Itoa(argCount)
+	if userModel.Role != "admin" && userModel.Role != "user" {
+		query += fmt.Sprintf(" AND user_id = $%d", argCount)
 		args = append(args, userModel.ID)
 		argCount++
 	}
 
-	query += " ORDER BY created_at DESC LIMIT $" + strconv.Itoa(argCount) + " OFFSET $" + strconv.Itoa(argCount+1)
+	// Add pagination
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argCount, argCount+1)
 	args = append(args, limit, offset)
 
 	// Execute query
+	log.Printf("Executing query: %s", query)
+	log.Printf("Query args: %v", args)
 	rows, err := db.DB.Query(query, args...)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch labels"})
+		log.Printf("Database query error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch labels", "details": err.Error()})
 		return
 	}
 	defer rows.Close()
 
-	var labels []models.Label
-	for rows.Next() {
-		var label models.Label
-		err := rows.Scan(
-			&label.ID, &label.LabelID, &label.Location, &label.BundleNos, &label.PQD,
-			&label.Unit, &label.Time1, &label.Length, &label.HeatNo, &label.ProductHeading,
-			&label.IsiBottom, &label.IsiTop, &label.ChargeDtm, &label.Mill, &label.Grade,
-			&label.UrlApikey, &label.Weight, &label.Section, &label.Date1, &label.PrintedAt,
-			&label.UserID, &label.Status, &label.ZPLContent, &label.QRCode, &label.IsDuplicate,
-			&label.CreatedAt, &label.UpdatedAt,
-		)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan label"})
-			return
-		}
-		labels = append(labels, label)
+	// Get column names
+	columns, err := rows.Columns()
+	if err != nil {
+		log.Printf("Failed to get columns: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get columns", "details": err.Error()})
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"labels": labels, "count": len(labels)})
+	var labels []map[string]interface{}
+
+	// Process each row
+	rowCount := 0
+	for rows.Next() {
+		rowCount++
+		log.Printf("Processing row %d", rowCount)
+
+		// Create slices to hold the values
+		values := make([]interface{}, len(columns))
+		valuePtrs := make([]interface{}, len(columns))
+		for i := range values {
+			valuePtrs[i] = &values[i]
+		}
+
+		// Scan the row
+		if err := rows.Scan(valuePtrs...); err != nil {
+			log.Printf("Row scan error: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan label row", "details": err.Error()})
+			return
+		}
+
+		// Create a map for this row
+		row := make(map[string]interface{})
+		for i, col := range columns {
+			val := values[i]
+			// Handle different types properly
+			switch v := val.(type) {
+			case []byte:
+				// Convert UUID and other binary types to string
+				row[col] = string(v)
+			case time.Time:
+				// Format time properly
+				row[col] = v.Format(time.RFC3339)
+			case nil:
+				row[col] = nil
+			default:
+				row[col] = v
+			}
+		}
+		log.Printf("Row %d data: %v", rowCount, row)
+		labels = append(labels, row)
+	}
+	log.Printf("Total rows processed: %d", rowCount)
+
+	// Check for errors from iterating over rows
+	if err = rows.Err(); err != nil {
+		log.Printf("Rows iteration error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to iterate over labels", "details": err.Error()})
+		return
+	}
+
+	// Return success response
+	c.JSON(http.StatusOK, gin.H{
+		"labels":    labels,
+		"count":     len(labels),
+		"limit":     limit,
+		"offset":    offset,
+		"user_id":   userModel.ID,
+		"user_role": userModel.Role,
+		"debug":     "GetLabels function executed at " + time.Now().Format("2006-01-02 15:04:05"),
+	})
 }
