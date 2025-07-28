@@ -17,7 +17,7 @@ func InitDB() error {
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "5432")
 	user := getEnv("DB_USER", "postgres")
-	password := getEnv("DB_PASSWORD", "password")
+	password := getEnv("DB_PASSWORD", "root")
 	dbname := getEnv("DB_NAME", "labelops")
 
 	// Create connection string
@@ -66,7 +66,7 @@ func createTables() error {
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)`,
-		`CREATE TABLE IF NOT EXISTS tmt_bar_labels (
+		`CREATE TABLE IF NOT EXISTS labels (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			label_id VARCHAR(255) UNIQUE NOT NULL,
 			location VARCHAR(100),
@@ -97,7 +97,7 @@ func createTables() error {
 		)`,
 		`CREATE TABLE IF NOT EXISTS print_jobs (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			label_id UUID NOT NULL REFERENCES tmt_bar_labels(id),
+			label_id UUID NOT NULL REFERENCES labels(id),
 			user_id UUID NOT NULL REFERENCES users(id),
 			status VARCHAR(50) NOT NULL DEFAULT 'pending',
 			error_msg TEXT,
@@ -118,10 +118,10 @@ func createTables() error {
 			user_agent TEXT,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)`,
-		`CREATE INDEX IF NOT EXISTS idx_tmt_bar_labels_label_id ON tmt_bar_labels(label_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_tmt_bar_labels_user_id ON tmt_bar_labels(user_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_tmt_bar_labels_status ON tmt_bar_labels(status)`,
-		`CREATE INDEX IF NOT EXISTS idx_tmt_bar_labels_created_at ON tmt_bar_labels(created_at)`,
+		`CREATE INDEX IF NOT EXISTS idx_labels_label_id ON labels(label_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_labels_user_id ON labels(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_labels_status ON labels(status)`,
+		`CREATE INDEX IF NOT EXISTS idx_labels_created_at ON labels(created_at)`,
 		`CREATE INDEX IF NOT EXISTS idx_print_jobs_status ON print_jobs(status)`,
 		`CREATE INDEX IF NOT EXISTS idx_print_jobs_user_id ON print_jobs(user_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)`,
@@ -141,7 +141,7 @@ func createTables() error {
 // createStoredProcedures creates the stored procedures for batch processing
 func createStoredProcedures() error {
 	queries := []string{
-		`CREATE OR REPLACE FUNCTION process_tmt_bar_batch(
+		`CREATE OR REPLACE FUNCTION batch_label_process(
 			labels_json JSONB,
 			user_uuid UUID
 		) RETURNS JSONB AS $$
@@ -161,12 +161,12 @@ func createStoredProcedures() error {
 				
 				-- Check if label already exists
 				SELECT label_id INTO existing_label_id 
-				FROM tmt_bar_labels 
+				FROM labels 
 				WHERE label_id = label_id_val;
 				
 				IF existing_label_id IS NULL THEN
 					-- Insert new label
-					INSERT INTO tmt_bar_labels (
+					INSERT INTO labels (
 						label_id, location, bundle_nos, pqd, unit, time1, length,
 						heat_no, product_heading, isi_bottom, isi_top, charge_dtm,
 						mill, grade, url_apikey, weight, section, date1, user_id,
@@ -240,4 +240,4 @@ func CloseDB() error {
 		return DB.Close()
 	}
 	return nil
-} 
+}

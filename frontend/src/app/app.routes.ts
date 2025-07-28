@@ -23,7 +23,7 @@ export const routes: Routes = [
   },
   {
     path: 'labels',
-    loadComponent: () => import('./pages/labels/labels.component').then(m => m.LabelsComponent),
+    loadComponent: () => import('./pages/labels-list/labels-list.component').then(m => m.LabelsListComponent),
     canActivate: [authGuard]
   },
   {

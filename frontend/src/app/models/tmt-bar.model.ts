@@ -1,4 +1,4 @@
-export interface TMTBarData {
+export interface LabelData {
   LOCATION?: string;
   BUNDLE_NOS: number;
   PQD: string;
@@ -19,7 +19,7 @@ export interface TMTBarData {
   DATE1: string;
 }
 
-export interface TMTBarLabel {
+export interface Label {
   id: string;
   label_id: string;
   location?: string;
@@ -49,19 +49,19 @@ export interface TMTBarLabel {
   updated_at: string;
 }
 
-export interface TMTBarBatchRequest {
-  labels: TMTBarData[];
+export interface LabelBatchRequest {
+  labels: LabelData[];
 }
 
-export interface TMTBarBatchResponse {
-  new_labels: TMTBarLabel[];
-  duplicate_labels: TMTBarLabel[];
+export interface LabelBatchResponse {
+  new_labels: Label[];
+  duplicate_labels: Label[];
   total_processed: number;
   new_count: number;
   duplicate_count: number;
 }
 
-export interface TMTBarFilter {
+export interface LabelFilter {
   status?: string;
   grade?: string;
   section?: string;
@@ -71,7 +71,7 @@ export interface TMTBarFilter {
   offset?: number;
 }
 
-export interface TMTBarStats {
+export interface LabelStats {
   total_labels: number;
   printed_labels: number;
   pending_labels: number;

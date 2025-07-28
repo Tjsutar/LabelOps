@@ -76,7 +76,7 @@ The frontend will be available at `http://localhost:4200`
 - `POST /api/v1/auth/register` - User registration
 
 ### Labels (Protected)
-- `POST /api/v1/labels/batch` - Process TMT Bar batch
+- `POST /api/v1/labels/batch` - Process label batch (BatchLabelProcess)
 - `GET /api/v1/labels` - Get labels with filters
 - `GET /api/v1/labels/:id` - Get specific label
 - `POST /api/v1/labels/:id/print` - Print label
@@ -98,9 +98,9 @@ The frontend will be available at `http://localhost:4200`
 - `DELETE /api/v1/admin/users/:id` - Delete user
 - `GET /api/v1/admin/stats` - Get system statistics
 
-## Sample TMT Bar Data
+## Sample Label Data
 
-The system is designed to handle TMT Bar data in this format:
+The system is designed to handle label data in this format:
 
 ```json
 {
@@ -129,8 +129,8 @@ The system is designed to handle TMT Bar data in this format:
 
 ### ✅ Implemented
 - **Authentication**: JWT-based login/logout with role-based access
-- **TMT Bar Processing**: Batch processing with duplicate detection
-- **Label Management**: CRUD operations for TMT Bar labels
+- **Label Processing**: Batch processing with duplicate detection (`batch_label_process`)
+- **Label Management**: CRUD operations for labels
 - **Print Integration**: ZPL generation and print job management
 - **Audit Logging**: Complete audit trail for all actions
 - **CSV Export**: Export labels and audit logs

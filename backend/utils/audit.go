@@ -3,8 +3,11 @@ package utils
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"database/sql"
 
 	"labelops-backend/db"
+	"labelops-backend/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -101,12 +104,15 @@ func GetAuditLogs(c *gin.Context) {
 
 	var auditLogs []map[string]interface{}
 	for rows.Next() {
-		var log map[string]interface{}
-		var userEmail, firstName, lastName sql.NullString
-		
+		var (
+			id, userID, action, resource, resourceID, details, ipAddress, userAgent string
+			createdAt sql.NullTime
+			userEmail, firstName, lastName sql.NullString
+		)
+
 		err := rows.Scan(
-			&log["id"], &log["user_id"], &log["action"], &log["resource"], &log["resource_id"],
-			&log["details"], &log["ip_address"], &log["user_agent"], &log["created_at"],
+			&id, &userID, &action, &resource, &resourceID,
+			&details, &ipAddress, &userAgent, &createdAt,
 			&userEmail, &firstName, &lastName,
 		)
 		if err != nil {
@@ -114,7 +120,17 @@ func GetAuditLogs(c *gin.Context) {
 			return
 		}
 
-		// Add user info
+		log := map[string]interface{}{
+			"id":          id,
+			"user_id":     userID,
+			"action":      action,
+			"resource":    resource,
+			"resource_id": resourceID,
+			"details":     details,
+			"ip_address":  ipAddress,
+			"user_agent":  userAgent,
+			"created_at":  createdAt.Time,
+		}
 		if userEmail.Valid {
 			log["user_email"] = userEmail.String
 			log["user_name"] = firstName.String + " " + lastName.String
@@ -172,4 +188,4 @@ func generateAuditLogsCSV(rows interface{}) string {
 	// This would be implemented to convert database rows to CSV format
 	// For now, returning a placeholder
 	return "Action,Resource,Resource ID,Details,IP Address,Created At,User Email,User Name\n"
-} 
+}

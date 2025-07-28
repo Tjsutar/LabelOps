@@ -119,7 +119,8 @@ func Register(c *gin.Context) {
 	}
 
 	// Log audit
-	utils.LogAudit(c, user.ID, "register", "user", &user.ID.String(), "User registered successfully")
+idStr := user.ID.String()
+utils.LogAudit(c, user.ID, "register", "user", &idStr, "User registered successfully")
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User created successfully",
@@ -155,7 +156,8 @@ func UpdateUserProfile(c *gin.Context) {
 	}
 
 	// Log audit
-	utils.LogAudit(c, userModel.ID, "update_profile", "user", &userModel.ID.String(), "User profile updated")
+idStr := userModel.ID.String()
+utils.LogAudit(c, userModel.ID, "update_profile", "user", &idStr, "User profile updated")
 
 	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully"})
 } 

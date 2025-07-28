@@ -3,12 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { 
-  TMTBarData, 
-  TMTBarLabel, 
-  TMTBarBatchRequest, 
-  TMTBarBatchResponse, 
-  TMTBarFilter,
-  TMTBarStats 
+  LabelData, 
+  Label, 
+  LabelBatchRequest, 
+  LabelBatchResponse, 
+  LabelFilter,
+  LabelStats 
 } from '../models/tmt-bar.model';
 
 @Injectable({
@@ -17,11 +17,11 @@ import {
 export class LabelService {
   constructor(private http: HttpClient) {}
 
-  processBatch(batchRequest: TMTBarBatchRequest): Observable<TMTBarBatchResponse> {
-    return this.http.post<TMTBarBatchResponse>(`${environment.apiUrl}/labels/batch`, batchRequest);
+  processBatch(batchRequest: LabelBatchRequest): Observable<LabelBatchResponse> {
+    return this.http.post<LabelBatchResponse>(`${environment.apiUrl}/labels/batch`, batchRequest);
   }
 
-  getLabels(filter?: TMTBarFilter): Observable<{ labels: TMTBarLabel[], count: number }> {
+  getLabels(filter?: LabelFilter): Observable<{ labels: Label[], count: number }> {
     let params = new HttpParams();
     
     if (filter) {
@@ -34,11 +34,11 @@ export class LabelService {
       if (filter.offset) params = params.set('offset', filter.offset.toString());
     }
 
-    return this.http.get<{ labels: TMTBarLabel[], count: number }>(`${environment.apiUrl}/labels`, { params });
+    return this.http.get<{ labels: Label[], count: number }>(`${environment.apiUrl}/labels`, { params });
   }
 
-  getLabelById(id: string): Observable<TMTBarLabel> {
-    return this.http.get<TMTBarLabel>(`${environment.apiUrl}/labels/${id}`);
+  getLabelById(id: string): Observable<Label> {
+    return this.http.get<Label>(`${environment.apiUrl}/labels/${id}`);
   }
 
   printLabel(id: string): Observable<{ message: string, print_job_id: string, zpl_content: string }> {
@@ -48,7 +48,7 @@ export class LabelService {
     );
   }
 
-  exportLabelsCSV(filter?: TMTBarFilter): Observable<Blob> {
+  exportLabelsCSV(filter?: LabelFilter): Observable<Blob> {
     let params = new HttpParams();
     
     if (filter) {
@@ -77,8 +77,8 @@ export class LabelService {
     return this.http.post<any>(`${environment.apiUrl}/print-jobs/${id}/retry`, {});
   }
 
-  getStats(): Observable<TMTBarStats> {
-    return this.http.get<TMTBarStats>(`${environment.apiUrl}/admin/stats`);
+  getStats(): Observable<LabelStats> {
+    return this.http.get<LabelStats>(`${environment.apiUrl}/admin/stats`);
   }
 
   // Helper method to download CSV

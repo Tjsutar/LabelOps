@@ -8,8 +8,8 @@ import (
 	"labelops-backend/models"
 )
 
-// GenerateTMTBarZPL generates ZPL content for TMT Bar labels
-func GenerateTMTBarZPL(label models.TMTBarLabel) string {
+// GenerateLabelZPL generates ZPL content for labels
+func GenerateLabelZPL(label models.Label) string {
 	var zpl strings.Builder
 
 	// Start ZPL
@@ -115,7 +115,7 @@ func GenerateTMTBarZPL(label models.TMTBarLabel) string {
 }
 
 // generateQRData creates QR code data for the label
-func generateQRData(label models.TMTBarLabel) string {
+func generateQRData(label models.Label) string {
 	var data strings.Builder
 	data.WriteString("TMT_BAR|")
 	data.WriteString(label.PQD)
@@ -134,9 +134,9 @@ func generateQRData(label models.TMTBarLabel) string {
 	return data.String()
 }
 
-// GenerateTMTBarLabelsCSV generates CSV data for TMT Bar labels
-func GenerateTMTBarLabelsCSV(rows interface{}) string {
+// GenerateLabelsCSV generates CSV data for labels
+func GenerateLabelsCSV(rows interface{}) string {
 	// This would be implemented to convert database rows to CSV format
 	// For now, returning a placeholder
 	return "Label ID,Location,Bundle Nos,PQD,Unit,Time,Length,Heat No,Product Heading,ISI Bottom,ISI Top,Charge DTM,Mill,Grade,Weight,Section,Date,Printed At,Status,Is Duplicate,Created At\n"
-} 
+}

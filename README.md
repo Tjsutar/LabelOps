@@ -12,7 +12,7 @@ A comprehensive label printing and logging system built with Angular 18, Go, and
 
 ### Backend (Go/Gin)
 - **RESTful API**: Handle label data processing and print jobs
-- **Database Integration**: PostgreSQL with stored procedures
+- **Database Integration**: PostgreSQL with stored procedures (`batch_label_process`)
 - **Authentication**: JWT token management
 - **Print Job Queue**: Retry mechanism for failed prints
 
