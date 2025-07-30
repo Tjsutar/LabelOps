@@ -36,16 +36,16 @@ func GetLabelByID(c *gin.Context) {
 	err = db.DB.QueryRow(
 		`SELECT id, label_id, location, bundle_nos, pqd, unit, time1, length, 
 		 heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
-		 url_apikey, weight, section, date1, printed_at, user_id, status, 
-		 zpl_content, qr_code, is_duplicate, created_at, updated_at 
+		 url_apikey, weight, section, date1, user_id, status, 
+		 is_duplicate, created_at, updated_at 
 		 FROM labels WHERE id = $1`,
 		labelUUID,
 	).Scan(
 		&label.ID, &label.LabelID, &label.Location, &label.BundleNos, &label.PQD,
 		&label.Unit, &label.Time1, &label.Length, &label.HeatNo, &label.ProductHeading,
 		&label.IsiBottom, &label.IsiTop, &label.ChargeDtm, &label.Mill, &label.Grade,
-		&label.UrlApikey, &label.Weight, &label.Section, &label.Date1, &label.PrintedAt,
-		&label.UserID, &label.Status, &label.ZPLContent, &label.QRCode, &label.IsDuplicate,
+		&label.UrlApikey, &label.Weight, &label.Section, &label.Date1,
+		&label.UserID, &label.Status, &label.IsDuplicate,
 		&label.CreatedAt, &label.UpdatedAt,
 	)
 
@@ -79,16 +79,16 @@ func PrintLabel(c *gin.Context) {
 	err = db.DB.QueryRow(
 		`SELECT id, label_id, location, bundle_nos, pqd, unit, time1, length, 
 		 heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
-		 url_apikey, weight, section, date1, printed_at, user_id, status, 
-		 zpl_content, qr_code, is_duplicate, created_at, updated_at 
+		 url_apikey, weight, section, date1, user_id, status, 
+		 is_duplicate, created_at, updated_at 
 		 FROM labels WHERE id = $1`,
 		labelUUID,
 	).Scan(
 		&label.ID, &label.LabelID, &label.Location, &label.BundleNos, &label.PQD,
 		&label.Unit, &label.Time1, &label.Length, &label.HeatNo, &label.ProductHeading,
 		&label.IsiBottom, &label.IsiTop, &label.ChargeDtm, &label.Mill, &label.Grade,
-		&label.UrlApikey, &label.Weight, &label.Section, &label.Date1, &label.PrintedAt,
-		&label.UserID, &label.Status, &label.ZPLContent, &label.QRCode, &label.IsDuplicate,
+		&label.UrlApikey, &label.Weight, &label.Section, &label.Date1,
+		&label.UserID, &label.Status, &label.IsDuplicate,
 		&label.CreatedAt, &label.UpdatedAt,
 	)
 
@@ -101,19 +101,15 @@ func PrintLabel(c *gin.Context) {
 		return
 	}
 
-	// Generate ZPL content if not exists
-	if label.ZPLContent == "" {
-		label.ZPLContent = utils.GenerateLabelZPL(label)
-		// Update label with ZPL content
-		db.DB.Exec("UPDATE labels SET zpl_content = $1 WHERE id = $2", label.ZPLContent, label.ID)
-	}
+	// Generate ZPL content on-the-fly
+	zplContent := utils.GenerateLabelZPL(label)
 
 	// Create print job
 	printJobID := uuid.New()
 	_, err = db.DB.Exec(
 		`INSERT INTO print_jobs (id, label_id, user_id, status, zpl_content, max_retries) 
 		 VALUES ($1, $2, $3, $4, $5, $6)`,
-		printJobID, label.ID, userModel.ID, "pending", label.ZPLContent, 3,
+		printJobID, label.ID, userModel.ID, "pending", zplContent, 3,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create print job"})
@@ -130,7 +126,7 @@ func PrintLabel(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":      "Print job created successfully",
 		"print_job_id": printJobID.String(),
-		"zpl_content":  label.ZPLContent,
+		"zpl_content":  zplContent,
 	})
 }
 
@@ -142,7 +138,7 @@ func ExportLabelsCSV(c *gin.Context) {
 	// Build query for CSV export
 	query := `SELECT label_id, location, bundle_nos, pqd, unit, time1, length, 
 			  heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
-			  url_apikey, weight, section, date1, printed_at, status, is_duplicate, created_at 
+			  url_apikey, weight, section, date1, status, is_duplicate, created_at 
 			  FROM labels WHERE 1=1`
 	args := []interface{}{}
 
@@ -581,8 +577,8 @@ func GetLabels(c *gin.Context) {
 	// Build base query
 	query := `SELECT id, label_id, location, bundle_nos, pqd, unit, time1, length, 
 			  heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
-			  url_apikey, weight, section, date1, printed_at, user_id, status, 
-			  zpl_content, qr_code, is_duplicate, created_at, updated_at 
+			  url_apikey, weight, section, date1, user_id, status, 
+			  is_duplicate, created_at, updated_at 
 			  FROM labels WHERE 1=1`
 
 	var args []interface{}

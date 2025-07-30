@@ -86,11 +86,8 @@ func createTables() error {
 			weight VARCHAR(50),
 			section VARCHAR(255) NOT NULL,
 			date1 VARCHAR(20) NOT NULL,
-			printed_at TIMESTAMP,
 			user_id UUID NOT NULL REFERENCES users(id),
 			status VARCHAR(50) NOT NULL DEFAULT 'pending',
-			zpl_content TEXT,
-			qr_code TEXT,
 			is_duplicate BOOLEAN NOT NULL DEFAULT false,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
