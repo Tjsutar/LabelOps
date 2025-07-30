@@ -44,12 +44,7 @@ import { User } from '../../models/user.model';
                 *ngIf="currentUser?.role === 'admin'">
                 Admin
               </a>
-              <a 
-                routerLink="/font-test" 
-                routerLinkActive="text-primary-600 border-b-2 border-primary-600"
-                class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">
-                Font Test
-              </a>
+              
             </nav>
           </div>
 

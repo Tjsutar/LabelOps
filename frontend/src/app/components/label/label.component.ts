@@ -24,6 +24,11 @@ export interface LabelData {
   TIME1?: string;
   LENGTH?: string;
   charge_dtm?: string;
+  BUNDLE_NOS?: number;
+  PQD?: string;
+  UNIT?: string;
+  LOCATION?: string;
+  WEIGHT?: string;
   // Add other properties as needed
 }
 
@@ -74,7 +79,7 @@ export interface LabelData {
 
       <!-- Section Title -->
       <div class="text-center font-bold text-[18px] border-2 border-black mt-2 mb-1 label-heading">
-        {{ labelData?.PRODUCT_HEADING || 'TMT BAR' }}
+        {{ labelData?.PRODUCT_HEADING || 'CHANNEL' }}
       </div>
 
       <!-- Label Info & QR -->
@@ -89,13 +94,13 @@ export interface LabelData {
           <!-- SECTION -->
           <div class="mt-3 text-[14px] label-eb-garamond leading-none">
             <div class="font-bold leading-none text-[10px] label-condensed">SECTION</div>
-            <div class="font-bold leading-none text-[14px] label-bold">{{ labelData?.SECTION || 'TMT BAR 25' }}</div>
+            <div class="font-bold leading-none text-[14px] label-bold">{{ labelData?.SECTION || 'CHANNEL 75*40*4.8' }}</div>
           </div>
 
           <!-- GRADE -->
           <div class="mt-3 leading-none label-eb-garamond">
             <div class="font-bold text-[18px] label-condensed">GRADE</div>
-            <div class="font-bold text-[14px] label-bold">{{ labelData?.GRADE || 'IS 1786 FE550D' }}</div>
+            <div class="font-bold text-[14px] label-bold">{{ labelData?.GRADE || 'IS 2062 EZSOBR' }}</div>
           </div>
 
           <!-- ID -->
@@ -107,7 +112,7 @@ export interface LabelData {
 
         <!-- ISI logo and info -->
         <div class="flex flex-col leading-none label-eb-garamond mt-1.5">
-          <div class="font-bold ml-0.5 text-[9px] label-condensed">{{ labelData?.ISI_TOP || 'IS 1786:2008' }}</div>
+          <div class="font-bold ml-0.5 text-[9px] label-condensed">{{ labelData?.ISI_TOP || 'IS 2062.2011' }}</div>
           <div class="flex items-center justify-center ml-1 w-14 h-10">
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Isi_mark.svg/1200px-Isi_mark.svg.png"
@@ -115,7 +120,7 @@ export interface LabelData {
               class="w-full h-full object-contain"
             />
           </div>
-          <div class="font-bold ml-1 text-[9px] label-condensed">{{ labelData?.ISI_BOTTOM || 'CML 187244' }}</div>
+          <div class="font-bold ml-1 text-[9px] label-condensed">{{ labelData?.ISI_BOTTOM || 'CML 57534' }}</div>
         </div>
 
         <!-- First QR Code -->
@@ -147,7 +152,7 @@ export interface LabelData {
             class="ml-5 text-[10px] grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 font-bold label-condensed"
           >
             <div>LENGTH</div>
-            <div>: {{ labelData?.LENGTH || 'STD' }}</div>
+            <div>: {{ labelData?.LENGTH || '12000' }}</div>
             <div>DATE</div>
             <div>: {{ labelData?.DATE1 || '25-JUN-25' }}</div>
             <div>TIME</div>
