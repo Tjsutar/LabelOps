@@ -39,11 +39,8 @@ export interface Label {
   weight?: string;
   section: string;
   date1: string;
-  printed_at?: string;
   user_id: string;
   status: 'pending' | 'printed' | 'failed';
-  zpl_content?: string;
-  qr_code?: string;
   is_duplicate: boolean;
   created_at: string;
   updated_at: string;
@@ -77,8 +74,6 @@ export interface LabelStats {
   pending_labels: number;
   failed_labels: number;
   duplicate_labels: number;
-  total_print_jobs: number;
-  failed_print_jobs: number;
   by_grade: Record<string, number>;
   by_section: Record<string, number>;
 } 

@@ -1,0 +1,104 @@
+<div class="p-5 max-w-7xl mx-auto">
+  <div class="flex justify-between items-center mb-5">
+    <h2 class="text-2xl font-bold text-gray-800 m-0">Labels List</h2>
+    <button 
+      (click)="loadLabels()" 
+      [disabled]="loading" 
+      class="px-4 py-2 bg-blue-600 text-white border-none rounded cursor-pointer text-sm hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed">
+      {{ loading ? 'Loading...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-10 text-gray-600">
+    <p>Loading labels...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-5">
+    <p>{{ error }}</p>
+    <button 
+      (click)="loadLabels()" 
+      class="bg-red-600 text-white border-none px-3 py-1 rounded cursor-pointer mt-2 hover:bg-red-700">
+      Try Again
+    </button>
+  </div>
+
+  <!-- Labels Table -->
+  <div *ngIf="!loading && !error" class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-3 py-3 text-left font-semibold text-gray-700">ID</th>
+            <th class="px-3 py-3 text-left font-semibold text-gray-700">Product</th>
+            <th class="px-3 py-3 text-left font-semibold text-gray-700">Section</th>
+            <th class="px-3 py-3 text-left font-semibold text-gray-700">Grade</th>
+            <th class="px-3 py-3 text-left font-semibold text-gray-700">Heat No</th>
+            <th class="px-3 py-3 text-left font-semibold text-gray-700">Date</th>
+            <th class="px-3 py-3 text-left font-semibold text-gray-700">Status</th>
+            <th class="px-3 py-3 text-left font-semibold text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let label of labels" class="border-b border-gray-200 hover:bg-gray-50">
+            <td class="px-3 py-3">{{ label.id || label.label_id }}</td>
+            <td class="px-3 py-3">{{ label.product_heading }}</td>
+            <td class="px-3 py-3">{{ label.section }}</td>
+            <td class="px-3 py-3">{{ label.grade }}</td>
+            <td class="px-3 py-3">{{ label.heat_no }}</td>
+            <td class="px-3 py-3">{{ label.date1 }}</td>
+            <td class="px-3 py-3">
+              <span [class]="'font-medium ' + (label.status === 'printed' ? 'text-green-600' : label.status === 'failed' ? 'text-red-600' : 'text-yellow-600')">
+                {{ label.status || 'pending' }}
+              </span>
+            </td>
+            <td class="px-3 py-3">
+              <div class="flex gap-2 flex-wrap">
+                <button 
+                  (click)="previewLabel(label)" 
+                  class="px-3 py-1 bg-cyan-600 text-white border-none rounded cursor-pointer text-xs hover:bg-cyan-700">
+                  Preview
+                </button>
+                <button 
+                  (click)="printLabel(label.id || label.label_id)" 
+                  class="px-3 py-1 bg-green-600 text-white border-none rounded cursor-pointer text-xs hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
+                  [disabled]="loading">
+                  Print
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="labels.length === 0" class="text-center py-10 text-gray-600">
+      <p>No labels found.</p>
+    </div>
+  </div>
+
+  <!-- Label Preview Modal -->
+  <div *ngIf="showLabelPreview" 
+       class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+       (click)="closeLabelPreview()">
+    <div class="bg-white rounded-lg max-w-4xl max-h-screen overflow-auto relative" 
+         (click)="$event.stopPropagation()">
+      <div class="flex justify-between items-center p-5 border-b border-gray-200">
+        <h3 class="text-xl font-semibold text-gray-800 m-0">Label Preview</h3>
+        <button 
+          (click)="closeLabelPreview()" 
+          class="text-2xl cursor-pointer text-gray-600 hover:text-gray-800 bg-none border-none p-0 w-8 h-8 flex items-center justify-center">
+          &times;
+        </button>
+      </div>
+      <div class="p-5 flex justify-center">
+        <app-label 
+          *ngIf="selectedLabel" 
+          [labelData]="selectedLabel">
+        </app-label>
+      </div>
+    </div>
+  </div>
+</div>

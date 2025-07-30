@@ -9,7 +9,7 @@ import {
   LabelBatchResponse, 
   LabelFilter,
   LabelStats 
-} from '../models/tmt-bar.model';
+} from '../models/label.model';
 
 @Injectable({
   providedIn: 'root'
