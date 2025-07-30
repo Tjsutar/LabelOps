@@ -42,6 +42,10 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'font-test',
+    loadComponent: () => import('./components/font-test/font-test.component').then(m => m.FontTestComponent)
+  },
+  {
     path: '**',
     redirectTo: '/dashboard'
   }

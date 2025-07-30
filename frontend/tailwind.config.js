@@ -33,6 +33,11 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        'label-condensed': ['GoudySerialXBold', 'serif'],
+        'label-eb-garamond': ['EB Garamond', 'serif'],
+        'label-heading': ['GoudySerialXBold', 'serif'],
+        'label-body': ['EB Garamond', 'serif'],
+        'label-bold': ['GoudySerialXBold', 'serif'],
       },
     },
   },

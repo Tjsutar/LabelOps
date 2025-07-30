@@ -23,6 +23,7 @@ export interface LabelData {
   DATE1?: string;
   TIME1?: string;
   LENGTH?: string;
+  charge_dtm?: string;
   // Add other properties as needed
 }
 
@@ -40,9 +41,9 @@ export interface LabelData {
         <div
           class="flex flex-col items-center justify-center text-center font-bold label-condensed border-2 border-black px-2 py-1 w-20 h-20 leading-tight"
         >
-          <div>MADE</div>
-          <div>IN</div>
-          <div>INDIA</div>
+          <div class="text-[10px]">MADE</div>
+          <div class="text-[10px]">IN</div>
+          <div class="text-[10px]">INDIA</div>
         </div>
 
         <!-- Logo + Text -->
@@ -51,28 +52,28 @@ export interface LabelData {
             <div class="flex-shrink-0">
               <img
                 src="assets/images/SAIL_LOGO.png"
-                alt="ISI Mark"
+                alt="SAIL Logo"
                 class="w-10 h-10 filter grayscale contrast-200 brightness-0"
               />
             </div>
             <div>
-              <div class="text-[14px] font-[700]">
+              <div class="text-[12px] font-[700] label-condensed">
                 स्टील अथॉरिटी ऑफ इंडिया लिमिटेड
               </div>
-              <div class="font-bold text-[12px]">
+              <div class="font-bold text-[10px] label-condensed">
                 STEEL AUTHORITY OF INDIA LIMITED
               </div>
             </div>
           </div>
-          <div class="italic label-eb-garamond text-sm self-end">
+          <div class="italic label-eb-garamond text-[11px] self-end">
             भिलाई इस्पात संयंत्र
           </div>
-          <div class="font-bold text-sm self-end">BHILAI STEEL PLANT</div>
+          <div class="font-bold text-[11px] label-condensed self-end">BHILAI STEEL PLANT</div>
         </div>
       </div>
 
       <!-- Section Title -->
-      <div class="text-center font-bold text-[20px] border-2 border-black mt-2 mb-1">
+      <div class="text-center font-bold text-[18px] border-2 border-black mt-2 mb-1 label-heading">
         {{ labelData?.PRODUCT_HEADING || 'TMT BAR' }}
       </div>
 
@@ -80,47 +81,48 @@ export interface LabelData {
       <div class="flex justify-around w-auto h-auto bg-white text-black">
         <div>
           <!-- HEAT NO. -->
-          <div class="font-bold text-[24px] label-eb-garamond leading-none">
-            <div class="font-bold leading-none">HEAT NO.</div>
-            <div class="font-bold leading-none">{{ labelData?.HEAT_NO || 'C103262' }}</div>
+          <div class="font-bold text-[20px] label-eb-garamond leading-none">
+            <div class="font-bold leading-none text-[12px] label-condensed">HEAT NO.</div>
+            <div class="font-bold leading-none text-[16px] label-bold">{{ labelData?.HEAT_NO || 'C103262' }}</div>
           </div>
 
           <!-- SECTION -->
-          <div class="mt-3 text-[16px] label-eb-garamond leading-none">
-            <div class="font-bold leading-none">SECTION</div>
-            <div class="font-bold leading-none">{{ labelData?.SECTION || 'TMT BAR 25' }}</div>
+          <div class="mt-3 text-[14px] label-eb-garamond leading-none">
+            <div class="font-bold leading-none text-[10px] label-condensed">SECTION</div>
+            <div class="font-bold leading-none text-[14px] label-bold">{{ labelData?.SECTION || 'TMT BAR 25' }}</div>
           </div>
 
           <!-- GRADE -->
           <div class="mt-3 leading-none label-eb-garamond">
-            <div class="font-bold text-[22px]">GRADE</div>
-            <div class="font-bold">{{ labelData?.GRADE || 'IS 1786 FE550D' }}</div>
+            <div class="font-bold text-[18px] label-condensed">GRADE</div>
+            <div class="font-bold text-[14px] label-bold">{{ labelData?.GRADE || 'IS 1786 FE550D' }}</div>
           </div>
 
           <!-- ID -->
           <div class="mt-3 leading-[16px] label-eb-garamond">
-            <div class="font-bold">ID</div>
-            <div class="font-bold">{{ labelData?.ID || '2025014374' }}</div>
+            <div class="font-bold text-[12px] label-condensed">ID</div>
+            <div class="font-bold text-[14px] label-bold">{{ labelData?.charge_dtm || '2025014374' }}</div>
           </div>
         </div>
 
         <!-- ISI logo and info -->
         <div class="flex flex-col leading-none label-eb-garamond mt-1.5">
-          <div class="font-bold ml-0.5 text-[11px]">{{ labelData?.ISI_TOP || 'IS 1786:2008' }}</div>
+          <div class="font-bold ml-0.5 text-[9px] label-condensed">{{ labelData?.ISI_TOP || 'IS 1786:2008' }}</div>
           <div class="flex items-center justify-center ml-1 w-14 h-10">
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Isi_mark.svg/1200px-Isi_mark.svg.png"
               alt="ISI Mark"
+              class="w-full h-full object-contain"
             />
           </div>
-          <div class="font-bold ml-1 text-[11px]">{{ labelData?.ISI_BOTTOM || 'CML 187244' }}</div>
+          <div class="font-bold ml-1 text-[9px] label-condensed">{{ labelData?.ISI_BOTTOM || 'CML 187244' }}</div>
         </div>
 
         <!-- First QR Code -->
         <div>
           <canvas
             #canvas1
-            class="h-32 w-32 mt-2 object-contain "
+            class="h-32 w-32 mt-2 object-contain"
           ></canvas>
         </div>
       </div>
@@ -134,15 +136,15 @@ export interface LabelData {
         <div class="mt-2">
           <canvas
             #canvas2
-            class="h-32 w-32 object-contain "
+            class="h-32 w-32 object-contain"
           ></canvas>
         </div>
 
         <!-- Footer Text Info -->
         <div class="flex flex-col w-52 mt-2">
-          <div class="text-xl mb-2 mt-1 font-bold text-center">{{ labelData?.MILL || 'MM' }}</div>
+          <div class="text-lg mb-2 mt-1 font-bold text-center label-heading">{{ labelData?.MILL || 'MM' }}</div>
           <div
-            class="ml-5 text-sm grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 font-bold label-condensed"
+            class="ml-5 text-[10px] grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 font-bold label-condensed"
           >
             <div>LENGTH</div>
             <div>: {{ labelData?.LENGTH || 'STD' }}</div>

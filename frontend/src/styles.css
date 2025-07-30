@@ -4,6 +4,21 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* Custom font faces */
+@font-face {
+  font-family: 'GoudySerialXBold';
+  src: url('./assets/fonts/goudy-serial-xbold_freefontdownload_org/goudy-serial-xbold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'EBGaramond';
+  src: url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
+  font-weight: 400;
+  font-style: normal;
+}
+
 /* Custom styles */
 @layer base {
   html {
@@ -38,5 +53,34 @@
   
   .table-cell {
     @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+  }
+  
+  /* Label-specific font classes */
+  .label-condensed {
+    font-family: 'GoudySerialXBold', serif;
+    font-weight: bold;
+    letter-spacing: -0.02em;
+  }
+  
+  .label-eb-garamond {
+    font-family: 'EB Garamond', serif;
+    font-weight: 500;
+  }
+  
+  .label-heading {
+    font-family: 'GoudySerialXBold', serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .label-body {
+    font-family: 'EB Garamond', serif;
+    font-weight: 400;
+  }
+  
+  .label-bold {
+    font-family: 'GoudySerialXBold', serif;
+    font-weight: bold;
   }
 } 
