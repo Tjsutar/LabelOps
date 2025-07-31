@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { LabelService } from '../../services/label.service';
 import { Label } from '../../models/label.model';
 import { LabelComponent, LabelData } from '../../components/label/label.component';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-labels-list',
@@ -17,7 +18,10 @@ export class LabelsListComponent implements OnInit {
   selectedLabel: LabelData | null = null;
   showLabelPreview = false;
 
-  constructor(private labelService: LabelService) {}
+  constructor(
+    private labelService: LabelService,
+    private toastService: ToastService
+  ) {}
 
   ngOnInit() {
     this.loadLabels();
@@ -44,13 +48,22 @@ export class LabelsListComponent implements OnInit {
     this.labelService.printLabel(labelId).subscribe({
       next: (response) => {
         console.log('Print job created:', response);
-        // You can add a success message here
+        this.toastService.success(`Print job created successfully! Job ID: ${response.print_job_id.substring(0, 8)}...`);
+        // Refresh the labels to update status
+        this.loadLabels();
       },
       error: (err) => {
         console.error('Error printing label:', err);
-        // You can add an error message here
+        this.toastService.error('Failed to create print job. Please try again.');
       }
     });
+  }
+
+  printSelectedLabel() {
+    if (this.selectedLabel?.UUID) {
+      this.printLabel(this.selectedLabel.UUID);
+      this.closeLabelPreview();
+    }
   }
 
   previewLabel(label: any) {

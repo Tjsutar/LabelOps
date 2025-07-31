@@ -27,6 +27,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'print-jobs',
+    loadComponent: () => import('./pages/print-jobs/print-jobs.component').then(m => m.PrintJobsComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'audit',
     loadComponent: () => import('./pages/audit/audit.component').then(m => m.AuditComponent),
     canActivate: [authGuard]

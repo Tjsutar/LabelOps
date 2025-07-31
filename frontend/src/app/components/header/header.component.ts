@@ -25,12 +25,18 @@ import { User } from '../../models/user.model';
                 class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">
                 Dashboard
               </a>
-              <a 
-                routerLink="/labels" 
-                routerLinkActive="text-primary-600 border-b-2 border-primary-600"
-                class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">
-                Labels
-              </a>
+                             <a 
+                 routerLink="/labels" 
+                 routerLinkActive="text-primary-600 border-b-2 border-primary-600"
+                 class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">
+                 Labels
+               </a>
+               <a 
+                 routerLink="/print-jobs" 
+                 routerLinkActive="text-primary-600 border-b-2 border-primary-600"
+                 class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">
+                 Print Jobs
+               </a>
               <a 
                 routerLink="/audit" 
                 routerLinkActive="text-primary-600 border-b-2 border-primary-600"
