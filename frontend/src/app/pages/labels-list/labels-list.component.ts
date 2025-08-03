@@ -34,6 +34,12 @@ export class LabelsListComponent implements OnInit {
     this.labelService.getLabels().subscribe({
       next: (response: any) => {
         this.labels = response.labels || response;
+        console.log('Frontend: Loaded labels:', this.labels);
+        if (this.labels.length > 0) {
+          console.log('Frontend: First label structure:', this.labels[0]);
+          console.log('Frontend: First label id field:', this.labels[0].id);
+          console.log('Frontend: First label label_id field:', this.labels[0].label_id);
+        }
         this.loading = false;
       },
       error: (err) => {
@@ -44,7 +50,16 @@ export class LabelsListComponent implements OnInit {
     });
   }
 
-  printLabel(labelId: string) {
+  printLabel(labelId: string | undefined) {
+    if (!labelId) {
+      this.toastService.error('Label ID is missing! Cannot print label.');
+      return;
+    }
+    
+    console.log('Frontend: Attempting to print label with ID:', labelId);
+    console.log('Frontend: Label ID type:', typeof labelId);
+    console.log('Frontend: Label ID length:', labelId?.length);
+    
     this.labelService.printLabel(labelId).subscribe({
       next: (response) => {
         console.log('Print job created:', response);
@@ -54,14 +69,15 @@ export class LabelsListComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error printing label:', err);
+        console.error('Error details:', err.error);
         this.toastService.error('Failed to create print job. Please try again.');
       }
     });
   }
 
   printSelectedLabel() {
-    if (this.selectedLabel?.UUID) {
-      this.printLabel(this.selectedLabel.UUID);
+    if (this.selectedLabel?.label_id) {
+      this.printLabel(this.selectedLabel.label_id);
       this.closeLabelPreview();
     }
   }
@@ -69,9 +85,8 @@ export class LabelsListComponent implements OnInit {
   previewLabel(label: any) {
     // Convert the label data to the format expected by the label component
     this.selectedLabel = {
-      UUID: label.id || label.ID,
+      ID: label.id || label.ID,
       HEAT_NO: label.HEAT_NO || label.heat_no,
-      ID: label.ID || label.id,
       PRODUCT_HEADING: label.PRODUCT_HEADING || label.product_heading,
       SECTION: label.SECTION || label.section,
       GRADE: label.GRADE || label.grade,
@@ -80,7 +95,8 @@ export class LabelsListComponent implements OnInit {
       MILL: label.MILL || label.mill,
       DATE1: label.DATE1 || label.date1,
       TIME1: label.TIME1 || label.time1,
-      LENGTH: label.LENGTH || label.length
+      LENGTH: label.LENGTH || label.length,
+      label_id: label.label_id
     };
     this.showLabelPreview = true;
   }

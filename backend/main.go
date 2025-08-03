@@ -64,13 +64,13 @@ func main() {
 			protected.POST("/labels/batch", controllers.BatchLabelProcess)
 			protected.GET("/labels", controllers.GetLabels)
 			protected.GET("/labels/:id", controllers.GetLabelByID)
-			protected.POST("/labels/:id/print", controllers.PrintLabel)
+			protected.POST("/labels/print", controllers.PrintLabel)
 			protected.GET("/labels/export/csv", controllers.ExportLabelsCSV)
 
 			// Print job routes
 			protected.GET("/print-jobs", controllers.GetPrintJobs)
 			protected.GET("/print-jobs/:id", controllers.GetPrintJobByID)
-			protected.POST("/print-jobs/:id/retry", controllers.RetryPrintJob)
+			protected.POST("/print-jobs/retry", controllers.RetryPrintJob)
 
 			// User routes
 			protected.GET("/users/profile", controllers.GetUserProfile)

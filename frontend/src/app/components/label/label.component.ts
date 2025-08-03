@@ -29,6 +29,7 @@ export interface LabelData {
   UNIT?: string;
   LOCATION?: string;
   WEIGHT?: string;
+  label_id?: string;
   // Add other properties as needed
 }
 

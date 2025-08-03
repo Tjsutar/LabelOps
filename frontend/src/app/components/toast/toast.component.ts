@@ -1,12 +1,24 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { ToastService, Toast } from '../../services/toast.service';
 
 @Component({
   selector: 'app-toast',
   standalone: true,
   imports: [CommonModule],
+  animations: [
+    trigger('slideIn', [
+      transition(':enter', [
+        style({ transform: 'translateX(100%)', opacity: 0 }),
+        animate('300ms ease-out', style({ transform: 'translateX(0)', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('300ms ease-in', style({ transform: 'translateX(100%)', opacity: 0 }))
+      ])
+    ])
+  ],
   template: `
     <div class="fixed top-4 right-4 z-50 space-y-2">
       <div 

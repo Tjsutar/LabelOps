@@ -43,8 +43,8 @@ export class LabelService {
 
   printLabel(id: string): Observable<{ message: string, print_job_id: string, zpl_content: string }> {
     return this.http.post<{ message: string, print_job_id: string, zpl_content: string }>(
-      `${environment.apiUrl}/labels/${id}/print`, 
-      {}
+      `${environment.apiUrl}/labels/print`, 
+      { label_id: id }
     );
   }
 
@@ -74,7 +74,7 @@ export class LabelService {
   }
 
   retryPrintJob(id: string): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/print-jobs/${id}/retry`, {});
+    return this.http.post<any>(`${environment.apiUrl}/print-jobs/retry`, { job_id: id });
   }
 
   getStats(): Observable<LabelStats> {

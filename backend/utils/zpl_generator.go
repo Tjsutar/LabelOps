@@ -8,6 +8,14 @@ import (
 	"labelops-backend/models"
 )
 
+// safeString safely converts a string, handling nil/empty values
+func safeString(s string) string {
+	if s == "" {
+		return "N/A"
+	}
+	return s
+}
+
 // GenerateLabelZPL generates ZPL content for labels
 func GenerateLabelZPL(label models.Label) string {
 	var zpl strings.Builder
@@ -22,22 +30,22 @@ func GenerateLabelZPL(label models.Label) string {
 
 	// Header section
 	zpl.WriteString("^FO50,50^A0N,50,50^FD")
-	zpl.WriteString(label.ProductHeading)
+	zpl.WriteString(safeString(label.ProductHeading))
 	zpl.WriteString("^FS\n")
 
 	// Grade and Section
 	zpl.WriteString("^FO50,100^A0N,30,30^FD")
-	zpl.WriteString(label.Grade)
+	zpl.WriteString(safeString(label.Grade))
 	zpl.WriteString("^FS\n")
 
 	zpl.WriteString("^FO50,130^A0N,25,25^FD")
-	zpl.WriteString(label.Section)
+	zpl.WriteString(safeString(label.Section))
 	zpl.WriteString("^FS\n")
 
 	// Heat Number
 	zpl.WriteString("^FO50,160^A0N,25,25^FD")
 	zpl.WriteString("HEAT: ")
-	zpl.WriteString(label.HeatNo)
+	zpl.WriteString(safeString(label.HeatNo))
 	zpl.WriteString("^FS\n")
 
 	// Bundle Number
@@ -49,46 +57,46 @@ func GenerateLabelZPL(label models.Label) string {
 	// PQD (Primary Quality Data)
 	zpl.WriteString("^FO50,210^A0N,25,25^FD")
 	zpl.WriteString("PQD: ")
-	zpl.WriteString(label.PQD)
+	zpl.WriteString(safeString(label.PQD))
 	zpl.WriteString("^FS\n")
 
 	// Unit and Mill
 	zpl.WriteString("^FO50,235^A0N,25,25^FD")
-	zpl.WriteString(label.Unit)
+	zpl.WriteString(safeString(label.Unit))
 	zpl.WriteString(" | ")
-	zpl.WriteString(label.Mill)
+	zpl.WriteString(safeString(label.Mill))
 	zpl.WriteString("^FS\n")
 
 	// Date and Time
 	zpl.WriteString("^FO50,260^A0N,20,20^FD")
 	zpl.WriteString("DATE: ")
-	zpl.WriteString(label.Date1)
+	zpl.WriteString(safeString(label.Date1))
 	zpl.WriteString(" | TIME: ")
-	zpl.WriteString(label.Time1)
+	zpl.WriteString(safeString(label.Time1))
 	zpl.WriteString("^FS\n")
 
 	// ISI Standards
 	zpl.WriteString("^FO50,280^A0N,20,20^FD")
 	zpl.WriteString("ISI: ")
-	zpl.WriteString(label.IsiTop)
+	zpl.WriteString(safeString(label.IsiTop))
 	zpl.WriteString(" | ")
-	zpl.WriteString(label.IsiBottom)
+	zpl.WriteString(safeString(label.IsiBottom))
 	zpl.WriteString("^FS\n")
 
 	// Length and Weight
 	zpl.WriteString("^FO50,300^A0N,20,20^FD")
 	zpl.WriteString("LENGTH: ")
-	zpl.WriteString(label.Length)
+	zpl.WriteString(safeString(label.Length))
 	if label.Weight != nil {
 		zpl.WriteString(" | WEIGHT: ")
-		zpl.WriteString(*label.Weight)
+		zpl.WriteString(safeString(*label.Weight))
 	}
 	zpl.WriteString("^FS\n")
 
 	// Charge DTM
 	zpl.WriteString("^FO50,320^A0N,20,20^FD")
 	zpl.WriteString("CHARGE: ")
-	zpl.WriteString(label.ChargeDtm)
+	zpl.WriteString(safeString(label.ChargeDtm))
 	zpl.WriteString("^FS\n")
 
 	// QR Code with label data
@@ -99,7 +107,7 @@ func GenerateLabelZPL(label models.Label) string {
 
 	// Barcode for scanning
 	zpl.WriteString("^FO600,150^BY3^BCN,100,Y,N,N^FD")
-	zpl.WriteString(label.PQD)
+	zpl.WriteString(safeString(label.PQD))
 	zpl.WriteString("^FS\n")
 
 	// Footer with timestamp
@@ -118,19 +126,19 @@ func GenerateLabelZPL(label models.Label) string {
 func generateQRData(label models.Label) string {
 	var data strings.Builder
 	data.WriteString("TMT_BAR|")
-	data.WriteString(label.PQD)
+	data.WriteString(safeString(label.PQD))
 	data.WriteString("|")
-	data.WriteString(label.HeatNo)
+	data.WriteString(safeString(label.HeatNo))
 	data.WriteString("|")
-	data.WriteString(label.Grade)
+	data.WriteString(safeString(label.Grade))
 	data.WriteString("|")
-	data.WriteString(label.Section)
+	data.WriteString(safeString(label.Section))
 	data.WriteString("|")
 	data.WriteString(fmt.Sprintf("%d", label.BundleNos))
 	data.WriteString("|")
-	data.WriteString(label.Date1)
+	data.WriteString(safeString(label.Date1))
 	data.WriteString("|")
-	data.WriteString(label.Time1)
+	data.WriteString(safeString(label.Time1))
 	return data.String()
 }
 
