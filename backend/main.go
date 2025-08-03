@@ -60,6 +60,9 @@ func main() {
 		protected := api.Group("/")
 		protected.Use(middleware.AuthMiddleware())
 		{
+			// Dashboard route
+			protected.GET("/dashboard/stats", controllers.GetDashboardStats)
+
 			// Label routes
 			protected.POST("/labels/batch", controllers.BatchLabelProcess)
 			protected.GET("/labels", controllers.GetLabels)

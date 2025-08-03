@@ -154,17 +154,23 @@ func PrintLabel(c *gin.Context) {
 
 // ExportLabelsCSV exports labels as CSV
 func ExportLabelsCSV(c *gin.Context) {
-	user, _ := c.Get("user")
-	userModel := user.(models.User)
+	userVal, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userModel, ok := userVal.(models.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user object"})
+		return
+	}
 
-	// Build query for CSV export
 	query := `SELECT label_id, location, bundle_nos, pqd, unit, time1, length, 
 			  heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
 			  url_apikey, weight, section, date1, status, is_duplicate, created_at 
 			  FROM labels WHERE 1=1`
 	args := []interface{}{}
 
-	// Add user filter for non-admin users
 	if userModel.Role != "admin" {
 		query += " AND user_id = $1"
 		args = append(args, userModel.ID)
@@ -172,25 +178,34 @@ func ExportLabelsCSV(c *gin.Context) {
 
 	query += " ORDER BY created_at DESC"
 
+	fmt.Println("Running Query:", query)
+	fmt.Println("With Args:", args)
+
 	rows, err := db.DB.Query(query, args...)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch labels for export"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to fetch labels for export",
+			"details": err.Error(),
+		})
 		return
 	}
 	defer rows.Close()
 
-	// Generate CSV
 	csvData := utils.GenerateLabelsCSV(rows)
 
-	// Set response headers
+	if len(csvData) == 0 {
+		c.JSON(http.StatusNoContent, gin.H{"message": "No data to export"})
+		return
+	}
+
 	c.Header("Content-Type", "text/csv")
 	c.Header("Content-Disposition", "attachment; filename=labels.csv")
 
-	// Log audit
 	utils.LogAudit(c, userModel.ID, "export_csv", "labels", nil, "Exported labels to CSV")
 
 	c.Data(http.StatusOK, "text/csv", []byte(csvData))
 }
+
 
 // GetPrintJobs retrieves print jobs
 func GetPrintJobs(c *gin.Context) {
@@ -487,6 +502,140 @@ func DeleteUser(c *gin.Context) {
 	utils.LogAudit(c, adminUser.ID, "delete_user", "users", &userID, "User deleted by admin")
 
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+}
+
+// GetDashboardStats retrieves comprehensive dashboard statistics
+func GetDashboardStats(c *gin.Context) {
+	// Get basic label counts
+	var totalLabels, printedLabels, pendingLabels, failedLabels, duplicateLabels int
+
+	// Total labels count
+	err := db.DB.QueryRow("SELECT COUNT(*) FROM labels").Scan(&totalLabels)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get total labels count"})
+		return
+	}
+
+	// Printed labels count (status = 'printed')
+	err = db.DB.QueryRow("SELECT COUNT(*) FROM labels WHERE status = 'printed'").Scan(&printedLabels)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get printed labels count"})
+		return
+	}
+
+	// Pending labels count (status = 'pending')
+	err = db.DB.QueryRow("SELECT COUNT(*) FROM labels WHERE status = 'pending'").Scan(&pendingLabels)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get pending labels count"})
+		return
+	}
+
+	// Failed labels count (status = 'failed')
+	err = db.DB.QueryRow("SELECT COUNT(*) FROM labels WHERE status = 'failed'").Scan(&failedLabels)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get failed labels count"})
+		return
+	}
+
+	// Duplicate labels count
+	err = db.DB.QueryRow("SELECT COUNT(*) FROM labels WHERE is_duplicate = true").Scan(&duplicateLabels)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get duplicate labels count"})
+		return
+	}
+
+	// Get labels by grade
+	gradeRows, err := db.DB.Query("SELECT grade, COUNT(*) FROM labels GROUP BY grade ORDER BY COUNT(*) DESC LIMIT 10")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get labels by grade"})
+		return
+	}
+	defer gradeRows.Close()
+
+	byGrade := make(map[string]int)
+	for gradeRows.Next() {
+		var grade string
+		var count int
+		if err := gradeRows.Scan(&grade, &count); err != nil {
+			continue
+		}
+		byGrade[grade] = count
+	}
+
+	// Get labels by section
+	sectionRows, err := db.DB.Query("SELECT section, COUNT(*) FROM labels GROUP BY section ORDER BY COUNT(*) DESC LIMIT 10")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get labels by section"})
+		return
+	}
+	defer sectionRows.Close()
+
+	bySection := make(map[string]int)
+	for sectionRows.Next() {
+		var section string
+		var count int
+		if err := sectionRows.Scan(&section, &count); err != nil {
+			continue
+		}
+		bySection[section] = count
+	}
+
+	// Get recent activity (labels created in last 24 hours)
+	var recentLabels int
+	err = db.DB.QueryRow("SELECT COUNT(*) FROM labels WHERE created_at >= NOW() - INTERVAL '24 hours'").Scan(&recentLabels)
+	if err != nil {
+		recentLabels = 0 // Default to 0 if query fails
+	}
+
+	// Get print success rate
+	var totalPrintJobs, successfulPrintJobs int
+	err = db.DB.QueryRow("SELECT COUNT(*) FROM print_jobs").Scan(&totalPrintJobs)
+	if err != nil {
+		totalPrintJobs = 0
+	}
+
+	err = db.DB.QueryRow("SELECT COUNT(*) FROM print_jobs WHERE status = 'completed'").Scan(&successfulPrintJobs)
+	if err != nil {
+		successfulPrintJobs = 0
+	}
+
+	printSuccessRate := float64(0)
+	if totalPrintJobs > 0 {
+		printSuccessRate = float64(successfulPrintJobs) / float64(totalPrintJobs) * 100
+	}
+
+	// Get active users count
+	var activeUsers int
+	err = db.DB.QueryRow("SELECT COUNT(DISTINCT user_id) FROM labels WHERE created_at >= NOW() - INTERVAL '7 days'").Scan(&activeUsers)
+	if err != nil {
+		activeUsers = 0
+	}
+
+	// Create comprehensive dashboard response
+	dashboardStats := gin.H{
+		"overview": gin.H{
+			"total_labels":     totalLabels,
+			"printed_labels":   printedLabels,
+			"pending_labels":   pendingLabels,
+			"failed_labels":    failedLabels,
+			"duplicate_labels": duplicateLabels,
+		},
+		"breakdown": gin.H{
+			"by_grade":   byGrade,
+			"by_section": bySection,
+		},
+		"activity": gin.H{
+			"recent_labels_24h": recentLabels,
+			"active_users_7d":   activeUsers,
+		},
+		"performance": gin.H{
+			"print_success_rate": fmt.Sprintf("%.1f%%", printSuccessRate),
+			"total_print_jobs":   totalPrintJobs,
+		},
+		"timestamp": time.Now().UTC(),
+	}
+
+	c.JSON(http.StatusOK, dashboardStats)
 }
 
 // GetSystemStats retrieves system statistics (admin only)

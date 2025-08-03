@@ -1,7 +1,12 @@
 package utils
 
 import (
+	"bytes"
+	"database/sql"
+	"encoding/csv"
 	"fmt"
+	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -143,8 +148,80 @@ func generateQRData(label models.Label) string {
 }
 
 // GenerateLabelsCSV generates CSV data for labels
-func GenerateLabelsCSV(rows interface{}) string {
-	// This would be implemented to convert database rows to CSV format
-	// For now, returning a placeholder
-	return "Label ID,Location,Bundle Nos,PQD,Unit,Time,Length,Heat No,Product Heading,ISI Bottom,ISI Top,Charge DTM,Mill,Grade,Weight,Section,Date,Printed At,Status,Is Duplicate,Created At\n"
+// func GenerateLabelsCSV(rows interface{}) string {
+// 	// This would be implemented to convert database rows to CSV format
+// 	// For now, returning a placeholder
+// 	return "Label ID,Location,Bundle Nos,PQD,Unit,Time,Length,Heat No,Product Heading,ISI Bottom,ISI Top,Charge DTM,Mill,Grade,Weight,Section,Date,Printed At,Status,Is Duplicate,Created At\n"
+// }
+
+
+// GenerateLabelsCSV generates CSV data from *sql.Rows
+func GenerateLabelsCSV(rows *sql.Rows) string {
+	var buffer bytes.Buffer
+	writer := csv.NewWriter(&buffer)
+
+	// Define CSV header
+	headers := []string{
+		"Label ID", "Location", "Bundle Nos", "PQD", "Unit", "Time", "Length",
+		"Heat No", "Product Heading", "ISI Bottom", "ISI Top", "Charge DTM",
+		"Mill", "Grade", "URL API Key", "Weight", "Section", "Date",
+		"Printed At", "Status", "Is Duplicate", "Created At",
+	}
+	writer.Write(headers)
+
+	for rows.Next() {
+		var (
+			labelID, location, bundleNos, pqd, unit, time1, length                sql.NullString
+			heatNo, productHeading, isiBottom, isiTop, chargeDtm, mill, grade    sql.NullString
+			urlAPIKey, weight, section, date1, status                            sql.NullString
+			isDuplicate                                                          sql.NullBool
+			createdAt                                                            sql.NullTime
+		)
+
+		err := rows.Scan(
+			&labelID, &location, &bundleNos, &pqd, &unit, &time1, &length,
+			&heatNo, &productHeading, &isiBottom, &isiTop, &chargeDtm, &mill, &grade,
+			&urlAPIKey, &weight, &section, &date1, &status, &isDuplicate, &createdAt,
+		)
+		if err != nil {
+			log.Println("Error scanning row:", err)
+			continue // skip the row on error
+		}
+
+		record := []string{
+			nullToStr(labelID), nullToStr(location), nullToStr(bundleNos), nullToStr(pqd),
+			nullToStr(unit), nullToStr(time1), nullToStr(length), nullToStr(heatNo),
+			nullToStr(productHeading), nullToStr(isiBottom), nullToStr(isiTop),
+			nullToStr(chargeDtm), nullToStr(mill), nullToStr(grade),
+			nullToStr(urlAPIKey), nullToStr(weight), nullToStr(section), nullToStr(date1),
+			nullToStr(status), nullBoolToStr(isDuplicate), nullTimeToStr(createdAt),
+		}
+
+		writer.Write(record)
+	}
+
+	writer.Flush()
+	return buffer.String()
+}
+
+// Helper functions
+func nullToStr(ns sql.NullString) string {
+	if ns.Valid {
+		return ns.String
+	}
+	return ""
+}
+
+func nullBoolToStr(nb sql.NullBool) string {
+	if nb.Valid {
+		return strconv.FormatBool(nb.Bool)
+	}
+	return ""
+}
+
+func nullTimeToStr(nt sql.NullTime) string {
+	if nt.Valid {
+		return nt.Time.Format(time.RFC3339)
+	}
+	return ""
 }
