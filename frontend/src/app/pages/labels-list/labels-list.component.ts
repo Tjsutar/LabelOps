@@ -17,6 +17,7 @@ export class LabelsListComponent implements OnInit {
   error: string | null = null;
   selectedLabel: LabelData | null = null;
   showLabelPreview = false;
+  exporting = false;
 
   constructor(
     private labelService: LabelService,
@@ -104,5 +105,24 @@ export class LabelsListComponent implements OnInit {
   closeLabelPreview() {
     this.showLabelPreview = false;
     this.selectedLabel = null;
+  }
+
+  exportLabels() {
+    this.exporting = true;
+    
+    this.labelService.exportLabelsCSV().subscribe({
+      next: (blob) => {
+        console.log(blob);
+        const filename = `labels_${new Date().toISOString().split('T')[0]}.csv`;
+        this.labelService.downloadCSV(blob, filename);
+        this.toastService.success('Labels exported successfully!');
+        this.exporting = false;
+      },
+      error: (error) => {
+        console.error('Error exporting labels:', error);
+        this.toastService.error('Failed to export labels');
+        this.exporting = false;
+      }
+    });
   }
 }

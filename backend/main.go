@@ -74,6 +74,7 @@ func main() {
 			protected.GET("/print-jobs", controllers.GetPrintJobs)
 			protected.GET("/print-jobs/:id", controllers.GetPrintJobByID)
 			protected.POST("/print-jobs/retry", controllers.RetryPrintJob)
+			protected.GET("/print-jobs/export/csv", controllers.ExportPrintJobsCSV)
 
 			// User routes
 			protected.GET("/users/profile", controllers.GetUserProfile)

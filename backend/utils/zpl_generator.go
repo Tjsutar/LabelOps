@@ -225,3 +225,52 @@ func nullTimeToStr(nt sql.NullTime) string {
 	}
 	return ""
 }
+
+// GeneratePrintJobsCSV generates CSV data from print jobs *sql.Rows
+func GeneratePrintJobsCSV(rows *sql.Rows) string {
+	var buffer bytes.Buffer
+	writer := csv.NewWriter(&buffer)
+
+	// Define CSV header for print jobs
+	headers := []string{
+		"Job ID", "Label ID", "User ID", "Status", "Max Retries", "Retry Count",
+		 "Created At", "Updated At",
+	}
+	writer.Write(headers)
+
+	for rows.Next() {
+		var (
+			jobID, labelID, userID, status sql.NullString
+			maxRetries, retries         sql.NullInt32
+			createdAt, updatedAt           sql.NullTime
+		)
+
+		err := rows.Scan(
+			&jobID, &labelID, &userID, &status, &maxRetries, &retries,
+			 &createdAt, &updatedAt,
+		)
+		if err != nil {
+			log.Println("Error scanning print job row:", err)
+			continue // skip the row on error
+		}
+
+		record := []string{
+			nullToStr(jobID), nullToStr(labelID), nullToStr(userID), nullToStr(status),
+			nullIntToStr(maxRetries), nullIntToStr(retries),
+			nullTimeToStr(createdAt), nullTimeToStr(updatedAt),
+		}
+
+		writer.Write(record)
+	}
+
+	writer.Flush()
+	return buffer.String()
+}
+
+// Helper function for nullable integers
+func nullIntToStr(ni sql.NullInt32) string {
+	if ni.Valid {
+		return strconv.Itoa(int(ni.Int32))
+	}
+	return ""
+}

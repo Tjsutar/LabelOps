@@ -59,6 +59,8 @@ export class LabelService {
       if (filter.is_duplicate !== undefined) params = params.set('is_duplicate', filter.is_duplicate.toString());
     }
 
+    console.log(params);
+
     return this.http.get(`${environment.apiUrl}/labels/export/csv`, { 
       params, 
       responseType: 'blob' 
@@ -75,6 +77,20 @@ export class LabelService {
 
   retryPrintJob(id: string): Observable<any> {
     return this.http.post<any>(`${environment.apiUrl}/print-jobs/retry`, { job_id: id });
+  }
+
+  // Export print jobs as CSV
+  exportPrintJobsCSV(status?: string): Observable<Blob> {
+    let params = new HttpParams();
+    
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    return this.http.get(`${environment.apiUrl}/print-jobs/export/csv`, {
+      params,
+      responseType: 'blob'
+    });
   }
 
   getStats(): Observable<LabelStats> {

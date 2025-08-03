@@ -24,12 +24,20 @@ interface PrintJob {
     <div class="p-5 max-w-7xl mx-auto">
       <div class="flex justify-between items-center mb-5">
         <h2 class="text-2xl font-bold text-gray-800 m-0">Print Jobs</h2>
-        <button 
-          (click)="loadPrintJobs()" 
-          [disabled]="loading" 
-          class="px-4 py-2 bg-blue-600 text-white border-none rounded cursor-pointer text-sm hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed">
-          {{ loading ? 'Loading...' : 'Refresh' }}
-        </button>
+        <div class="flex gap-3">
+          <button 
+            (click)="exportPrintJobs()" 
+            [disabled]="loading || exporting" 
+            class="px-4 py-2 bg-green-600 text-white border-none rounded cursor-pointer text-sm hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed">
+            {{ exporting ? 'Exporting...' : 'Export CSV' }}
+          </button>
+          <button 
+            (click)="loadPrintJobs()" 
+            [disabled]="loading" 
+            class="px-4 py-2 bg-blue-600 text-white border-none rounded cursor-pointer text-sm hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed">
+            {{ loading ? 'Loading...' : 'Refresh' }}
+          </button>
+        </div>
       </div>
 
       <!-- Loading State -->
@@ -129,6 +137,7 @@ export class PrintJobsComponent implements OnInit {
   error: string | null = null;
   showZPLModal = false;
   selectedZPL = '';
+  exporting = false;
 
   constructor(
     private labelService: LabelService,
@@ -197,5 +206,24 @@ export class PrintJobsComponent implements OnInit {
 
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleString();
+  }
+
+  exportPrintJobs() {
+    this.exporting = true;
+    
+    this.labelService.exportPrintJobsCSV().subscribe({
+      next: (blob) => {
+        console.log(blob);
+        const filename = `print_jobs_${new Date().toISOString().split('T')[0]}.csv`;
+        this.labelService.downloadCSV(blob, filename);
+        this.toastService.success('Print jobs exported successfully!');
+        this.exporting = false;
+      },
+      error: (error) => {
+        console.error('Error exporting print jobs:', error);
+        this.toastService.error('Failed to export print jobs');
+        this.exporting = false;
+      }
+    });
   }
 } 

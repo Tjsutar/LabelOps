@@ -206,7 +206,6 @@ func ExportLabelsCSV(c *gin.Context) {
 	c.Data(http.StatusOK, "text/csv", []byte(csvData))
 }
 
-
 // GetPrintJobs retrieves print jobs
 func GetPrintJobs(c *gin.Context) {
 	userVal, exists := c.Get("user")
@@ -247,12 +246,12 @@ func GetPrintJobs(c *gin.Context) {
 	for rows.Next() {
 		var (
 			id, labelID, userID, status, zplContent string
-			maxRetries                                int
-			createdAt, updatedAt                                  sql.NullTime
+			maxRetries                              int
+			createdAt, updatedAt                    sql.NullTime
 		)
 		err := rows.Scan(
 			&id, &labelID, &userID, &status, &zplContent, &maxRetries,
-			 &createdAt, &updatedAt,
+			&createdAt, &updatedAt,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan print job", "details": err.Error()})
@@ -260,14 +259,14 @@ func GetPrintJobs(c *gin.Context) {
 		}
 
 		job := map[string]interface{}{
-			"id":            id,
-			"label_id":      labelID,
-			"user_id":       userID,
-			"status":        status,
-			"zpl_content":   zplContent,
-			"max_retries":   maxRetries,
-			"created_at":    nilIfInvalidTime(createdAt),
-			"updated_at":    nilIfInvalidTime(updatedAt),
+			"id":          id,
+			"label_id":    labelID,
+			"user_id":     userID,
+			"status":      status,
+			"zpl_content": zplContent,
+			"max_retries": maxRetries,
+			"created_at":  nilIfInvalidTime(createdAt),
+			"updated_at":  nilIfInvalidTime(updatedAt),
 		}
 		printJobs = append(printJobs, job)
 	}
@@ -690,6 +689,71 @@ func GetAuditLogs(c *gin.Context) {
 // ExportAuditLogsCSV exports audit logs as CSV
 func ExportAuditLogsCSV(c *gin.Context) {
 	utils.ExportAuditLogsCSV(c)
+}
+
+// ExportPrintJobsCSV exports print jobs as CSV
+func ExportPrintJobsCSV(c *gin.Context) {
+	userVal, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userModel, ok := userVal.(models.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user object"})
+		return
+	}
+
+	// Build query for print jobs
+	query := `SELECT id, label_id, user_id, status, max_retries, retries, 
+		 created_at, updated_at 
+			  FROM print_jobs WHERE 1=1`
+	args := []interface{}{}
+
+	// Add user filter for non-admin users
+	if userModel.Role != "admin" {
+		query += " AND user_id = $1"
+		args = append(args, userModel.ID)
+	}
+
+	// Add optional status filter
+	if status := c.Query("status"); status != "" {
+		if userModel.Role != "admin" {
+			query += " AND status = $2"
+		} else {
+			query += " AND status = $1"
+		}
+		args = append(args, status)
+	}
+
+	query += " ORDER BY created_at DESC"
+
+	log.Printf("Running Print Jobs Export Query: %s", query)
+	log.Printf("With Args: %v", args)
+
+	rows, err := db.DB.Query(query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to fetch print jobs for export",
+			"details": err.Error(),
+		})
+		return
+	}
+	defer rows.Close()
+
+	csvData := utils.GeneratePrintJobsCSV(rows)
+
+	if len(csvData) == 0 {
+		c.JSON(http.StatusNoContent, gin.H{"message": "No print jobs data to export"})
+		return
+	}
+
+	c.Header("Content-Type", "text/csv")
+	c.Header("Content-Disposition", "attachment; filename=print_jobs.csv")
+
+	utils.LogAudit(c, userModel.ID, "export_csv", "print_jobs", nil, "Exported print jobs to CSV")
+
+	c.Data(http.StatusOK, "text/csv", []byte(csvData))
 }
 
 // BatchLabelProcess processes a batch of labels
