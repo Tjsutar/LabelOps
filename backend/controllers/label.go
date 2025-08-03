@@ -64,7 +64,7 @@ func GetLabelByID(c *gin.Context) {
 // PrintLabel prints a specific label
 func PrintLabel(c *gin.Context) {
 	var request struct {
-		LabelID string `json:"label_id" binding:"required"`
+		ID string `json:"id" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -73,7 +73,7 @@ func PrintLabel(c *gin.Context) {
 		return
 	}
 
-	log.Printf("PrintLabel: Received request with label_id: %s", request.LabelID)
+	log.Printf("PrintLabel: Received request with label_id: %s", request.ID)
 
 	user, _ := c.Get("user")
 	userModel := user.(models.User)
@@ -87,7 +87,7 @@ func PrintLabel(c *gin.Context) {
 		       created_at, updated_at
 		FROM labels
 		WHERE id = $1
-	`, "0444b843-b13e-4641-9379-cedae829d13f").Scan(
+	`, request.ID).Scan(
 		&label.ID, &label.LabelID, &label.Location, &label.BundleNos, &label.PQD,
 		&label.Unit, &label.Time1, &label.Length, &label.HeatNo, &label.ProductHeading,
 		&label.IsiBottom, &label.IsiTop, &label.ChargeDtm, &label.Mill, &label.Grade,
@@ -98,10 +98,10 @@ func PrintLabel(c *gin.Context) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("PrintLabel: No label found for label_id: %s", request.LabelID)
+			log.Printf("PrintLabel: No label found for label_id: %s", request.ID)
 			c.JSON(http.StatusNotFound, gin.H{
 				"error":   "Label not found",
-				"details": fmt.Sprintf("No label found with label_id: %s", request.LabelID),
+				"details": fmt.Sprintf("No label found with label_id: %s", request.ID),
 			})
 			return
 		}

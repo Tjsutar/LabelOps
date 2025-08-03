@@ -76,8 +76,8 @@ export class LabelsListComponent implements OnInit {
   }
 
   printSelectedLabel() {
-    if (this.selectedLabel?.label_id) {
-      this.printLabel(this.selectedLabel.label_id);
+    if (this.selectedLabel?.ID) {
+      this.printLabel(this.selectedLabel.ID);
       this.closeLabelPreview();
     }
   }

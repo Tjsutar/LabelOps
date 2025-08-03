@@ -61,9 +61,9 @@
                   Preview
                 </button>
                 <button 
-                  (click)="printLabel(label.label_id)" 
+                  (click)="printLabel(label.id)" 
                   class="px-3 py-1 bg-green-600 text-white border-none rounded cursor-pointer text-xs hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
-                  [disabled]="loading || !label.label_id">
+                  [disabled]="loading || !label.id">
                   Print
                 </button>
               </div>
