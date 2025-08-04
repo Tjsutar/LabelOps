@@ -38,7 +38,7 @@ export interface Label {
   url_apikey: string;
   weight?: string;
   section: string;
-  date1: string;
+  date: string;
   user_id: string;
   status: 'pending' | 'printed' | 'failed';
   is_duplicate: boolean;

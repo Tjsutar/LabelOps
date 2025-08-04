@@ -36,15 +36,15 @@ func GetLabelByID(c *gin.Context) {
 	err = db.DB.QueryRow(
 		`SELECT id, label_id, location, bundle_nos, pqd, unit, time1, length, 
 		 heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
-		 url_apikey, weight, section, date1, user_id, status, 
+		 url_apikey, weight, section, date, user_id, status, 
 		 is_duplicate, created_at, updated_at 
 		 FROM labels WHERE id = $1`,
 		labelUUID,
 	).Scan(
-		&label.ID, &label.LabelID, &label.Location, &label.BundleNos, &label.PQD,
-		&label.Unit, &label.Time1, &label.Length, &label.HeatNo, &label.ProductHeading,
+		&label.ID, &label.LabelID, &label.Location, &label.BundleNo, &label.PQD,
+		&label.Unit, &label.Time, &label.Length, &label.HeatNo, &label.ProductHeading,
 		&label.IsiBottom, &label.IsiTop, &label.ChargeDtm, &label.Mill, &label.Grade,
-		&label.UrlApikey, &label.Weight, &label.Section, &label.Date1,
+		&label.UrlApikey, &label.Weight, &label.Section, &label.Date,
 		&label.UserID, &label.Status, &label.IsDuplicate,
 		&label.CreatedAt, &label.UpdatedAt,
 	)
@@ -81,17 +81,17 @@ func PrintLabel(c *gin.Context) {
 	// Fetch label using the label_id (string), but retrieve its UUID `id`
 	var label models.Label
 	err := db.DB.QueryRow(`
-		SELECT id, label_id, location, bundle_nos, pqd, unit, time1, length,
+		SELECT id, label_id, location, bundle_no, pqd, unit, time, length,
 		       heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade,
-		       url_apikey, weight, section, date1, user_id, status, is_duplicate,
+		       url_apikey, weight, section, date, user_id, status, is_duplicate,
 		       created_at, updated_at
 		FROM labels
 		WHERE id = $1
 	`, request.ID).Scan(
-		&label.ID, &label.LabelID, &label.Location, &label.BundleNos, &label.PQD,
-		&label.Unit, &label.Time1, &label.Length, &label.HeatNo, &label.ProductHeading,
+		&label.ID, &label.LabelID, &label.Location, &label.BundleNo, &label.PQD,
+		&label.Unit, &label.Time, &label.Length, &label.HeatNo, &label.ProductHeading,
 		&label.IsiBottom, &label.IsiTop, &label.ChargeDtm, &label.Mill, &label.Grade,
-		&label.UrlApikey, &label.Weight, &label.Section, &label.Date1,
+		&label.UrlApikey, &label.Weight, &label.Section, &label.Date,
 		&label.UserID, &label.Status, &label.IsDuplicate,
 		&label.CreatedAt, &label.UpdatedAt,
 	)
@@ -165,9 +165,9 @@ func ExportLabelsCSV(c *gin.Context) {
 		return
 	}
 
-	query := `SELECT label_id, location, bundle_nos, pqd, unit, time1, length, 
+	query := `SELECT label_id, location, bundle_no, pqd, unit, time, length, 
 			  heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
-			  url_apikey, weight, section, date1, status, is_duplicate, created_at 
+			  url_apikey, weight, section, date, status, is_duplicate, created_at 
 			  FROM labels WHERE 1=1`
 	args := []interface{}{}
 
@@ -764,10 +764,18 @@ func BatchLabelProcess(c *gin.Context) {
 		return
 	}
 
-	user, _ := c.Get("user")
-	userModel := user.(models.User)
+	userVal, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userModel, ok := userVal.(models.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user object"})
+		return
+	}
 
-	// Convert labels to JSON for stored procedure
+	// Convert labels to JSON
 	labelsJSON, err := json.Marshal(req.Labels)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to marshal labels"})
@@ -775,16 +783,16 @@ func BatchLabelProcess(c *gin.Context) {
 	}
 
 	// Call stored procedure
-	var resultJSON []byte
-	err = db.DB.QueryRow("SELECT batch_label_process($1, $2)", labelsJSON, userModel.ID).Scan(&resultJSON)
+	var resultStr string
+	err = db.DB.QueryRow("SELECT batch_label_process($1, $2)", labelsJSON, userModel.ID).Scan(&resultStr)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process batch"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process batch", "details": err.Error()})
 		return
 	}
 
 	var result map[string]interface{}
-	if err := json.Unmarshal(resultJSON, &result); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse result"})
+	if err := json.Unmarshal([]byte(resultStr), &result); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse result", "details": err.Error()})
 		return
 	}
 
@@ -798,6 +806,7 @@ func BatchLabelProcess(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 }
+
 
 // GetLabels retrieves labels with filtering
 func GetLabels(c *gin.Context) {
@@ -836,7 +845,7 @@ func GetLabels(c *gin.Context) {
 	// Build base query
 	query := `SELECT id, label_id, location, bundle_nos, pqd, unit, time1, length, 
 			  heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
-			  url_apikey, weight, section, date1, user_id, status, 
+			  url_apikey, weight, section, date, user_id, status, 
 			  is_duplicate, created_at, updated_at 
 			  FROM labels WHERE 1=1`
 

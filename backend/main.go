@@ -20,9 +20,11 @@ func main() {
 	}
 
 	// Initialize database
-	if err := db.InitDB(); err != nil {
-		log.Fatal("Failed to initialize database:", err)
+	// Initialize the database connection and schema
+	if err := initialize(); err != nil {
+		log.Fatalf("Failed to initialize application: %v", err)
 	}
+	log.Println("🚀 Server is ready to run...")
 
 	// Set Gin mode
 	if os.Getenv("GIN_MODE") == "release" {
@@ -107,4 +109,10 @@ func main() {
 			log.Fatal("Failed to start server:", err)
 		}
 	}
+}
+
+func initialize() error {
+	// Initialize DB and run migrations/seeds
+	db.InitDB()
+	return nil
 }

@@ -9,7 +9,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var DB *sql.DB
 
 // InitDB initializes the database connection
 func InitDB() error {
@@ -70,24 +69,24 @@ func createTables() error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			label_id VARCHAR(255) UNIQUE NOT NULL,
 			location VARCHAR(100),
-			bundle_nos INTEGER NOT NULL,
+			bundle_no VARCHAR(255) NOT NULL,
 			pqd VARCHAR(255) NOT NULL,
 			unit VARCHAR(50) NOT NULL,
-			time1 VARCHAR(10) NOT NULL,
-			length VARCHAR(50) NOT NULL,
+			time VARCHAR(10) NOT NULL,
+			length INTEGER,
 			heat_no VARCHAR(100) NOT NULL,
 			product_heading VARCHAR(255) NOT NULL,
 			isi_bottom VARCHAR(255) NOT NULL,
 			isi_top VARCHAR(255) NOT NULL,
-			charge_dtm VARCHAR(255) NOT NULL,
+			charge_dtm VARCHAR(255),
 			mill VARCHAR(50) NOT NULL,
 			grade VARCHAR(100) NOT NULL,
 			url_apikey VARCHAR(255) NOT NULL,
 			weight VARCHAR(50),
 			section VARCHAR(255) NOT NULL,
-			date1 VARCHAR(20) NOT NULL,
+			date VARCHAR(20) NOT NULL,
 			user_id UUID NOT NULL REFERENCES users(id),
-			status VARCHAR(50) NOT NULL DEFAULT 'pending',
+			status VARCHAR(50) NOT NULL DEFAULT 'completed',
 			is_duplicate BOOLEAN NOT NULL DEFAULT false,
 			created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -96,7 +95,7 @@ func createTables() error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			label_id UUID NOT NULL REFERENCES labels(id),
 			user_id UUID NOT NULL REFERENCES users(id),
-			status VARCHAR(50) NOT NULL DEFAULT 'pending',
+			status VARCHAR(50) NOT NULL DEFAULT 'completed',
 			error_message TEXT,
 			retry_count INTEGER NOT NULL DEFAULT 0,
 			max_retries INTEGER NOT NULL DEFAULT 3,
@@ -164,17 +163,17 @@ func createStoredProcedures() error {
 				IF existing_label_id IS NULL THEN
 					-- Insert new label
 					INSERT INTO labels (
-						label_id, location, bundle_nos, pqd, unit, time1, length,
+						label_id, location, bundle_no, pqd, unit, time, length,
 						heat_no, product_heading, isi_bottom, isi_top, charge_dtm,
-						mill, grade, url_apikey, weight, section, date1, user_id,
+						mill, grade, url_apikey, weight, section, date, user_id,
 						status, is_duplicate
 					) VALUES (
 						label_id_val,
 						label_record->>'LOCATION',
-						(label_record->>'BUNDLE_NOS')::INTEGER,
+						(label_record->>'BUNDLE_NO')::INTEGER,
 						label_record->>'PQD',
 						label_record->>'UNIT',
-						label_record->>'TIME1',
+						label_record->>'TIME',
 						label_record->>'LENGTH',
 						label_record->>'HEAT_NO',
 						label_record->>'PRODUCT_HEADING',
@@ -186,7 +185,7 @@ func createStoredProcedures() error {
 						label_record->>'URL_APIKEY',
 						label_record->>'WEIGHT',
 						label_record->>'SECTION',
-						label_record->>'DATE1',
+						label_record->>'DATE',
 						user_uuid,
 						'pending',
 						false

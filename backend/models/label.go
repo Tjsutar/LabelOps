@@ -9,23 +9,23 @@ import (
 // LabelData represents the label data structure from the API (matches dummy_data.json exactly)
 type LabelData struct {
 	LOCATION        *string `json:"LOCATION"`
-	BUNDLE_NOS      int     `json:"BUNDLE_NOS"`
+	BUNDLE_NO       string  `json:"BUNDLE_NO"`
+	BUNDLE_TYPE     string  `json:"BUNDLE_TYPE"`
 	PQD             string  `json:"PQD"`
 	UNIT            string  `json:"UNIT"`
-	TIME1           string  `json:"TIME1"`
-	LENGTH          string  `json:"LENGTH"`
+	TIME            string  `json:"TIME"`
+	LENGTH          int     `json:"LENGTH"`
 	HEAT_NO         string  `json:"HEAT_NO"`
 	PRODUCT_HEADING string  `json:"PRODUCT_HEADING"`
 	ISI_BOTTOM      string  `json:"ISI_BOTTOM"`
 	ISI_TOP         string  `json:"ISI_TOP"`
-	CHARGE_DTM      string  `json:"CHARGE_DTM"`
 	MILL            string  `json:"MILL"`
 	GRADE           string  `json:"GRADE"`
 	URL_APIKEY      string  `json:"URL_APIKEY"`
 	ID              *string `json:"ID"`
 	WEIGHT          *string `json:"WEIGHT"`
 	SECTION         string  `json:"SECTION"`
-	DATE1           string  `json:"DATE1"`
+	DATE            string  `json:"DATE"`
 }
 
 // Label represents a label in the database (simplified to match JSON structure)
@@ -33,11 +33,12 @@ type Label struct {
 	ID             uuid.UUID `json:"id" db:"id"`
 	LabelID        string    `json:"label_id" db:"label_id" binding:"required"`
 	Location       *string   `json:"location" db:"location"`
-	BundleNos      int       `json:"bundle_nos" db:"bundle_nos"`
+	BundleNo       string    `json:"bundle_no" db:"bundle_no"`
+	BundleType     string    `json:"bundle_type" db:"bundle_type"`
 	PQD            string    `json:"pqd" db:"pqd"`
 	Unit           string    `json:"unit" db:"unit"`
-	Time1          string    `json:"time1" db:"time1"`
-	Length         string    `json:"length" db:"length"`
+	Time           string    `json:"time" db:"time"`
+	Length         int       `json:"length" db:"length"`
 	HeatNo         string    `json:"heat_no" db:"heat_no"`
 	ProductHeading string    `json:"product_heading" db:"product_heading"`
 	IsiBottom      string    `json:"isi_bottom" db:"isi_bottom"`
@@ -48,7 +49,7 @@ type Label struct {
 	UrlApikey      string    `json:"url_apikey" db:"url_apikey"`
 	Weight         *string   `json:"weight" db:"weight"`
 	Section        string    `json:"section" db:"section"`
-	Date1          string    `json:"date1" db:"date1"`
+	Date           string    `json:"date" db:"date"`
 	UserID         uuid.UUID `json:"user_id" db:"user_id"`
 	Status         string    `json:"status" db:"status"` // "pending", "printed", "failed"
 	IsDuplicate    bool      `json:"is_duplicate" db:"is_duplicate"`

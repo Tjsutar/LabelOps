@@ -56,7 +56,7 @@ func GenerateLabelZPL(label models.Label) string {
 	// Bundle Number
 	zpl.WriteString("^FO50,185^A0N,25,25^FD")
 	zpl.WriteString("BUNDLE: ")
-	zpl.WriteString(fmt.Sprintf("%d", label.BundleNos))
+	zpl.WriteString(safeString(label.BundleNo))
 	zpl.WriteString("^FS\n")
 
 	// PQD (Primary Quality Data)
@@ -75,9 +75,9 @@ func GenerateLabelZPL(label models.Label) string {
 	// Date and Time
 	zpl.WriteString("^FO50,260^A0N,20,20^FD")
 	zpl.WriteString("DATE: ")
-	zpl.WriteString(safeString(label.Date1))
+	zpl.WriteString(safeString(label.Date))
 	zpl.WriteString(" | TIME: ")
-	zpl.WriteString(safeString(label.Time1))
+	zpl.WriteString(safeString(label.Time))
 	zpl.WriteString("^FS\n")
 
 	// ISI Standards
@@ -91,7 +91,7 @@ func GenerateLabelZPL(label models.Label) string {
 	// Length and Weight
 	zpl.WriteString("^FO50,300^A0N,20,20^FD")
 	zpl.WriteString("LENGTH: ")
-	zpl.WriteString(safeString(label.Length))
+	zpl.WriteString(fmt.Sprintf("%d", label.Length))
 	if label.Weight != nil {
 		zpl.WriteString(" | WEIGHT: ")
 		zpl.WriteString(safeString(*label.Weight))
@@ -139,11 +139,11 @@ func generateQRData(label models.Label) string {
 	data.WriteString("|")
 	data.WriteString(safeString(label.Section))
 	data.WriteString("|")
-	data.WriteString(fmt.Sprintf("%d", label.BundleNos))
+	data.WriteString(safeString(label.BundleNo))
 	data.WriteString("|")
-	data.WriteString(safeString(label.Date1))
+	data.WriteString(safeString(label.Date))
 	data.WriteString("|")
-	data.WriteString(safeString(label.Time1))
+	data.WriteString(safeString(label.Time))
 	return data.String()
 }
 
@@ -153,7 +153,6 @@ func generateQRData(label models.Label) string {
 // 	// For now, returning a placeholder
 // 	return "Label ID,Location,Bundle Nos,PQD,Unit,Time,Length,Heat No,Product Heading,ISI Bottom,ISI Top,Charge DTM,Mill,Grade,Weight,Section,Date,Printed At,Status,Is Duplicate,Created At\n"
 // }
-
 
 // GenerateLabelsCSV generates CSV data from *sql.Rows
 func GenerateLabelsCSV(rows *sql.Rows) string {
@@ -171,17 +170,18 @@ func GenerateLabelsCSV(rows *sql.Rows) string {
 
 	for rows.Next() {
 		var (
-			labelID, location, bundleNos, pqd, unit, time1, length                sql.NullString
-			heatNo, productHeading, isiBottom, isiTop, chargeDtm, mill, grade    sql.NullString
-			urlAPIKey, weight, section, date1, status                            sql.NullString
-			isDuplicate                                                          sql.NullBool
-			createdAt                                                            sql.NullTime
+			labelID, location, bundleNos, pqd, unit, time1                    sql.NullString
+			length                                                            sql.NullInt64
+			heatNo, productHeading, isiBottom, isiTop, chargeDtm, mill, grade sql.NullString
+			urlAPIKey, weight, section, date, status                          sql.NullString
+			isDuplicate                                                       sql.NullBool
+			createdAt                                                         sql.NullTime
 		)
 
 		err := rows.Scan(
 			&labelID, &location, &bundleNos, &pqd, &unit, &time1, &length,
 			&heatNo, &productHeading, &isiBottom, &isiTop, &chargeDtm, &mill, &grade,
-			&urlAPIKey, &weight, &section, &date1, &status, &isDuplicate, &createdAt,
+			&urlAPIKey, &weight, &section, &date, &status, &isDuplicate, &createdAt,
 		)
 		if err != nil {
 			log.Println("Error scanning row:", err)
@@ -190,10 +190,10 @@ func GenerateLabelsCSV(rows *sql.Rows) string {
 
 		record := []string{
 			nullToStr(labelID), nullToStr(location), nullToStr(bundleNos), nullToStr(pqd),
-			nullToStr(unit), nullToStr(time1), nullToStr(length), nullToStr(heatNo),
+			nullToStr(unit), nullToStr(time1), nullInt64ToStr(length), nullToStr(heatNo),
 			nullToStr(productHeading), nullToStr(isiBottom), nullToStr(isiTop),
 			nullToStr(chargeDtm), nullToStr(mill), nullToStr(grade),
-			nullToStr(urlAPIKey), nullToStr(weight), nullToStr(section), nullToStr(date1),
+			nullToStr(urlAPIKey), nullToStr(weight), nullToStr(section), nullToStr(date),
 			nullToStr(status), nullBoolToStr(isDuplicate), nullTimeToStr(createdAt),
 		}
 
@@ -234,20 +234,20 @@ func GeneratePrintJobsCSV(rows *sql.Rows) string {
 	// Define CSV header for print jobs
 	headers := []string{
 		"Job ID", "Label ID", "User ID", "Status", "Max Retries", "Retry Count",
-		 "Created At", "Updated At",
+		"Created At", "Updated At",
 	}
 	writer.Write(headers)
 
 	for rows.Next() {
 		var (
 			jobID, labelID, userID, status sql.NullString
-			maxRetries, retries         sql.NullInt32
+			maxRetries, retries            sql.NullInt32
 			createdAt, updatedAt           sql.NullTime
 		)
 
 		err := rows.Scan(
 			&jobID, &labelID, &userID, &status, &maxRetries, &retries,
-			 &createdAt, &updatedAt,
+			&createdAt, &updatedAt,
 		)
 		if err != nil {
 			log.Println("Error scanning print job row:", err)
@@ -256,7 +256,7 @@ func GeneratePrintJobsCSV(rows *sql.Rows) string {
 
 		record := []string{
 			nullToStr(jobID), nullToStr(labelID), nullToStr(userID), nullToStr(status),
-			nullIntToStr(maxRetries), nullIntToStr(retries),
+			nullInt32ToStr(maxRetries), nullInt32ToStr(retries),
 			nullTimeToStr(createdAt), nullTimeToStr(updatedAt),
 		}
 
@@ -267,10 +267,17 @@ func GeneratePrintJobsCSV(rows *sql.Rows) string {
 	return buffer.String()
 }
 
-// Helper function for nullable integers
-func nullIntToStr(ni sql.NullInt32) string {
+// Helper functions for nullable integers
+func nullInt64ToStr(ni sql.NullInt64) string {
 	if ni.Valid {
-		return strconv.Itoa(int(ni.Int32))
+		return fmt.Sprintf("%d", ni.Int64)
+	}
+	return ""
+}
+
+func nullInt32ToStr(ni sql.NullInt32) string {
+	if ni.Valid {
+		return fmt.Sprintf("%d", ni.Int32)
 	}
 	return ""
 }
