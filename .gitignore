@@ -234,3 +234,9 @@ logs/
 cache/
 tmp/
 temp/ 
+
+# ===== PRINTERS =====
+
+printers/zpl/
+printers/bat/
+
