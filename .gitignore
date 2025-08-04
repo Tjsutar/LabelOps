@@ -131,13 +131,13 @@ build/
 # ===== DATABASE =====
 
 # Database files
-*.db
+# *.db
 *.sqlite
 *.sqlite3
 
 # Database dumps
 *.dump
-*.sql
+# *.sql
 
 # ===== DEVELOPMENT FILES =====
 
