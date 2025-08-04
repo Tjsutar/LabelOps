@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LabelService } from '../../services/label.service';
-import { Label } from '../../models/label.model';
-import { LabelComponent, LabelData } from '../../components/label/label.component';
+import { Label, LabelData } from '../../models/label.model';
+import { LabelComponent } from '../../components/label/label.component';
 import { ToastService } from '../../services/toast.service';
 
 @Component({
@@ -95,9 +95,13 @@ export class LabelsListComponent implements OnInit {
       ISI_BOTTOM: label.ISI_BOTTOM || label.isi_bottom,
       MILL: label.MILL || label.mill,
       DATE1: label.DATE1 || label.date1,
-      TIME1: label.TIME1 || label.time1,
-      LENGTH: label.LENGTH || label.length,
-      label_id: label.label_id
+      TIME: label.TIME || label.time1,
+      LENGTH: label.LENGTH || label.length, 
+      BUNDLE_NO: label.BUNDLE_NO || label.bundle_no,
+      PQD: label.PQD || label.pqd,
+      UNIT: label.UNIT || label.unit,
+      CHARGE_DTM: label.CHARGE_DTM || label.charge_dtm,
+      URL_APIKEY: label.URL_APIKEY || label.url_apikey,
     };
     this.showLabelPreview = true;
   }

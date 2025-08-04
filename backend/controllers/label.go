@@ -34,7 +34,7 @@ func GetLabelByID(c *gin.Context) {
 	// Get label
 	var label models.Label
 	err = db.DB.QueryRow(
-		`SELECT id, label_id, location, bundle_nos, pqd, unit, time1, length, 
+		`SELECT id, label_id, location, bundle_no, pqd, unit, time, length, 
 		 heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
 		 url_apikey, weight, section, date, user_id, status, 
 		 is_duplicate, created_at, updated_at 
@@ -843,7 +843,7 @@ func GetLabels(c *gin.Context) {
 	section := c.Query("section")
 
 	// Build base query
-	query := `SELECT id, label_id, location, bundle_nos, pqd, unit, time1, length, 
+	query := `SELECT id, label_id, location, bundle_no, pqd, unit, time, length, 
 			  heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
 			  url_apikey, weight, section, date, user_id, status, 
 			  is_duplicate, created_at, updated_at 

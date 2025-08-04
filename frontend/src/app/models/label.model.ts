@@ -1,10 +1,10 @@
 export interface LabelData {
   LOCATION?: string;
-  BUNDLE_NOS: number;
+  BUNDLE_NO: number;
   PQD: string;
   UNIT: string;
-  TIME1: string;
-  LENGTH: string;
+  TIME: string;
+  LENGTH: number;
   HEAT_NO: string;
   PRODUCT_HEADING: string;
   ISI_BOTTOM: string;
@@ -23,11 +23,12 @@ export interface Label {
   id: string;
   label_id: string;
   location?: string;
-  bundle_nos: number;
+  bundle_no: string;
+  bundle_type: string;
   pqd: string;
   unit: string;
-  time1: string;
-  length: string;
+  time: string;
+  length: number;
   heat_no: string;
   product_heading: string;
   isi_bottom: string;

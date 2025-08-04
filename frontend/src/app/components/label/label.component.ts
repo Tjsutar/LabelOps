@@ -9,29 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as QRCode from 'qrcode';
-
-export interface LabelData {
-  UUID?: string;
-  HEAT_NO?: string;
-  ID?: string;
-  PRODUCT_HEADING?: string;
-  SECTION?: string;
-  GRADE?: string;
-  ISI_TOP?: string;
-  ISI_BOTTOM?: string;
-  MILL?: string;
-  DATE1?: string;
-  TIME1?: string;
-  LENGTH?: string;
-  charge_dtm?: string;
-  BUNDLE_NOS?: number;
-  PQD?: string;
-  UNIT?: string;
-  LOCATION?: string;
-  WEIGHT?: string;
-  label_id?: string;
-  // Add other properties as needed
-}
+import { LabelData } from '../../models/label.model';
 
 @Component({
   selector: 'app-label',
@@ -107,7 +85,7 @@ export interface LabelData {
           <!-- ID -->
           <div class="mt-3 leading-[16px] label-eb-garamond">
             <div class="font-bold text-[12px] label-condensed">ID</div>
-            <div class="font-bold text-[14px] label-bold">{{ labelData?.charge_dtm || '2025014374' }}</div>
+            <div class="font-bold text-[14px] label-bold">{{ labelData?.ID || '2025014374' }}</div>
           </div>
         </div>
 
@@ -157,7 +135,7 @@ export interface LabelData {
             <div>DATE</div>
             <div>: {{ labelData?.DATE1 || '25-JUN-25' }}</div>
             <div>TIME</div>
-            <div>: {{ labelData?.TIME1 || '04:48' }}</div>
+            <div>: {{ labelData?.TIME || '04:48' }}</div>
           </div>
         </div>
       </div>
@@ -188,7 +166,7 @@ export class LabelComponent implements AfterViewInit, OnChanges {
   private async generateQrCodes() {
     // Generate QR URL if not provided
     if (!this.qrUrl && this.labelData) {
-      this.qrUrl = `https://madeinindia.qcin.org/product-details/${this.labelData.UUID || 'default'}/MM_${this.labelData.HEAT_NO || 'default'}_${this.labelData.ID || 'default'}`;
+      this.qrUrl = `https://madeinindia.qcin.org/product-details/${this.labelData.ID || 'default'}/MM_${this.labelData.HEAT_NO || 'default'}_${this.labelData.ID || 'default'}`;
     }
 
     if (!this.qrUrl || !this.canvas1Ref || !this.canvas2Ref) {
