@@ -32,10 +32,10 @@ func GenerateLabelZPL(label models.Label) string {
 ^FO161,16^GB65,556,3^FS
 ^FT91,504^A0B,30,30^FH\^CI28^FDIN^FS^CI27
 ^FT130,525^A0B,30,30^FH\^CI28^FDINDIA^FS^CI27
-^FT206,343^A0B,32,32^FH\^CI28^FDCHANNEL^FS^CI27
+^FT206,343^A0B,32,32^FH\^CI28^FDPHEAD^FS^CI27
 ^FT53,528^A0B,30,30^FH\^CI28^FDMADE^FS^CI27
 ^FO16,410^GB130,160,3^FS
-^FT590,218^A0B,34,33^FH\^CI28^FDV	MILL^FS^CI27
+^FT590,218^A0B,34,33^FH\^CI28^FDVMILL^FS^CI27
 ^FT483,570^A0B,25,25^FH\^CI28^FDID^FS^CI27
 ^FT516,570^A0B,31,30^FH\^CI28^FDVID^FS^CI27
 ^FT440,570^A0B,25,25^FH\^CI28^FDVGRADE^FS^CI27
@@ -46,7 +46,7 @@ func GenerateLabelZPL(label models.Label) string {
 ^FT718,310^A0B,25,25^FH\^CI28^FDTIME^FS^CI27
 ^FT683,310^A0B,25,25^FH\^CI28^FDDATE^FS^CI27
 ^FT365,570^A0B,25,25^FH\^CI25^FDVSECTION^FS^CI27
-^FT411,570^A0B,25,25^FH\^CI28^FDVGRADE^FS^CI27
+^FT411,570^A0B,25,25^FH\^CI28^FDGRADE^FS^CI27
 ^FT339,570^A0B,25,25^FH\^CI28^FDSECTION^FS^CI27
 ^FT295,569^A0B,34,33^FH\^CI28^FDVHEAT^FS^CI27
 ^FT260,343^A0B,14,15^FH\^CI28^FDVTOP^FS^CI27
@@ -56,11 +56,10 @@ func GenerateLabelZPL(label models.Label) string {
 ^FT718,199^A0B,25,25^FH\^CI28^FD:^FS^CI27
 ^FT683,199^A0B,25,25^FH\^CI28^FD:^FS^CI27
 ^FT643,199^A0B,25,25^FH\^CI28^FD:^FS^CI27
-^FO536,1^GB0,570,3^FS
-^FH\^FDVDATA^FS
-^FT570,580^BQN,2,4
-^FH\^FDMA,VQR^FS
+^FT560,573^BQN,2,4
+^FH\^FDMA,DVQRDOWN^FS
 ^FT245,275^BQN,2,5
+^FH\^FDMA,VQRUP^FS
 ^FO266,261^GFA,237,664,8,:Z64:eJzF0rENxCAMBVCjFJSMwChZDekGuJW4TRiB61xE4r4NRlFOSOni5lUYgz/RpbaGykS7eBA1LXLdtHWz75bAcijWUERfY9YmHFODjuNr6EXiPajHNJpp4RvX8A1X5xOe0sXYIp5SRDylnvWjjy/uCTGVGDDlWUyVxE2WAAlLUfVb/0Wf9r3h6rzYzDqNamH91vYZYq9j37Z/y4Plw/Ji+bE8zXxZ3i71A0iyOGc=:101F
 ^FO18,300^GFA,289,424,8,:Z64:eJxlULsNwjAQvZMjRTREdBRIWcEFBV0oGCRjpEsyAStlBDYgRQZISWHlceezEQg3Tyff+9wj+ns+YZcwGPBm6GBYYqBCsMIUscbMutpgjdjjFfeAoDPjuSk63GF0ETgJfSuiVR32xA+hv2oiwX5tBjoKfe5VnzFhltlhFP2z0J3ot0IvRX8RegUNKHSofp7jf7STfabED6aneVSfr+bHrfnrHPPcLB93lncky89k95TB7tt5u/fg0/1L6uNi/bC3vvi7v9xn7vfTd+7/570B8NB1AQ==:5907
 ^FO18,33^GFA,997,2112,8,:Z64:eJyNlb1OG0EUhe/Y0a4jIbNWmlnZeF6BkgIJHiOp7CppXbrLFpZFkSKlkZBoojxC6hVCeQZ3pkIUFK6iLSyT+3NmvYZIzkjwscv83HvuubNEu5GW/MsTHT8IPYW18Fz+JAqPlHUazP8QKX+BPyhUwmejLhJmIFGv0+TAeDG3+V+N7nqu09v5TJn4inQHPwWppq4L25r6Pmzw/3FNavK2snMi8b5Vk8/m923s377l/Que97KhBOc66ERjcGrnu7WdnxaiQ0GBQNEz518VKOPTnfF6ZnHkFk8rX9dx1OxYHEL3YqQl8o860I7/NTqgxw/HT9DRVZZHQJ7DS2MCtkvMn9o82+MU+50hGI+6fIcvkHek3/ktlVfsB/Wb+Kvpt/wR/op++4n9ot+Wr/y2y2sgHJWIc62UursHqbvXOrbYn1KvFhcp5WkJJz0USt6VUUYKah3I/LCnf01MDOfg51LZ/1KA0OERnFEP8SozkA7XNYWU1q+cr+TJPtYQ2E+m1wLnFHgu0cdb9HXMY4I6nJKTSAM2r7nTtUl307I+W22pKxxtVEf6SOYjZqr9tlVdXTDS4Gm/PzP0d4p+f39Dfa3vN9T5qtbX1p0a6fKNLgf7Ad4forfC1PLprU0XkvwvttQrJG7TJ94H0Q+Jt03S7ZHq1l516VjXz6H/3Hyc39t5/gm6TfBMVgfxmZ7fsvWjZ92PRha8W5j+zpd2PyAOoSOLSyj3gnGjlH1PFlT7UvRXrsy/UqcMddojr5G4XX2vRn+cQXfon8JXx9FfS9xzFfUlj+7Y8pRLA3nuUXTe89/Y1vtLCDy1eWIeuVLYBy76oCT1dZCp3L9dXTK2+0TGBIxePTQ6Df4jzr3vjPQRNfmA7xnzSp7v7DlPQNxPuN9f9w8NvM3j/YXiN6HUVfZLat+9U6abI1vHPsuazGc45x7nxPPWb76Htu63fb+YmdTrhO/Fpc13kgf77UNhcQZ5znbeb46/PgoGsg==:4315
@@ -72,15 +71,16 @@ func GenerateLabelZPL(label models.Label) string {
 	zpl = strings.ReplaceAll(zpl, "VHEAT", safeString(label.HeatNo))
 	zpl = strings.ReplaceAll(zpl, "VSECTION", safeString(label.Section))
 	zpl = strings.ReplaceAll(zpl, "VGRADE", safeString(label.Grade))
-	zpl = strings.ReplaceAll(zpl, "VID", safeString(label.BundleNo))
+	zpl = strings.ReplaceAll(zpl, "VID", safeString(label.LabelID))
 	zpl = strings.ReplaceAll(zpl, "VMILL", safeString(label.Mill))
 	zpl = strings.ReplaceAll(zpl, "VLENGTH", fmt.Sprintf("%d", label.Length))
 	zpl = strings.ReplaceAll(zpl, "VTIME", safeString(label.Time))
 	zpl = strings.ReplaceAll(zpl, "VDATE", safeString(label.Date))
 	zpl = strings.ReplaceAll(zpl, "VTOP", safeString(label.IsiTop))
 	zpl = strings.ReplaceAll(zpl, "VBOTTOM", safeString(label.IsiBottom))
-	zpl = strings.ReplaceAll(zpl, "VQR", generateQRData(label))
-	zpl = strings.ReplaceAll(zpl, "VDATA", generateLowerQRData(label))
+	zpl = strings.ReplaceAll(zpl, "VQRUP", generateQRData(label))
+	zpl = strings.ReplaceAll(zpl, "VQRDOWN", generateLowerQRData(label))
+	zpl = strings.ReplaceAll(zpl, "PHEAD", safeString(label.ProductHeading))
 
 	return zpl
 }
@@ -89,34 +89,31 @@ func GenerateLabelZPL(label models.Label) string {
 func generateLowerQRData(label models.Label) string {
 	return fmt.Sprintf(
 		"UNIT:%s;MILL:%s;HEAT:%s;SECTION:%s;GRADE:%s;ID:%s;LENGTH:%d;WEIGHT:%s;LOCATION:%s;PQD:%s;DATE:%s;TIME:%s;",
-		"SAIL-BSP",                      // Static unit name
-		safeString(label.Mill),          // Mill from label
-		safeString(label.HeatNo),        // Heat number
-		safeString(label.Section),       // Section
-		safeString(label.Grade),         // Grade
-		safeString(label.BundleNo),      // ID
-		label.Length,                    // Length (numeric)
+		"SAIL-BSP",                    // Static unit name
+		safeString(label.Mill),        // Mill from label
+		safeString(label.HeatNo),      // Heat number
+		safeString(label.Section),     // Section
+		safeString(label.Grade),       // Grade
+		safeString(label.LabelID),     // ID
+		label.Length,                  // Length (numeric)
 		safeStringPtr(label.Weight),   // Weight
-		safeStringPtr(label.Location),      // Location
-		safeString(label.PQD),           // PQD
-		safeString(label.Date),          // Date
-		safeString(label.Time),          // Time
+		safeStringPtr(label.Location), // Location
+		safeString(label.PQD),         // PQD
+		safeString(label.Date),        // Date
+		safeString(label.Time),        // Time
 	)
 }
-
 
 // generateQRData builds the QR URL from Label
 func generateQRData(label models.Label) string {
 	return fmt.Sprintf(
 		"https://madeinindia.qcin.org/product-details/%s/%s_%s_%s",
 		safeString(label.ID.String()), // Static UUID (change if dynamic later)
-		safeString(label.Mill),             // Mill
-		safeString(label.HeatNo),           // Heat number
-		safeString(label.PQD),              // PQD
+		safeString(label.Mill),        // Mill
+		safeString(label.HeatNo),      // Heat number
+		safeString(label.PQD),         // PQD
 	)
 }
-
-
 
 // GenerateAndSaveZPL saves the generated ZPL to a file
 func GenerateAndSaveZPL(label models.Label) (string, error) {
