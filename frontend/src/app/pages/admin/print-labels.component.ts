@@ -8,7 +8,7 @@ import { HttpClient, HttpHeaders } from "@angular/common/http";
   imports: [CommonModule],
   template: `
     <div
-      class="p-2 my-8 bg-white rounded shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm"
+      class="p-2 mb-6 bg-white rounded shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm"
     >
       <div class="flex items-center gap-2 flex-wrap">
         <input

@@ -1,16 +1,16 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { LabelService } from '../../services/label.service';
-import { Label, LabelData } from '../../models/label.model';
-import { LabelComponent } from '../../components/label/label.component';
-import { ToastService } from '../../services/toast.service';
-import { PrintLabelsComponent } from '../admin/print-labels.component';
+import { Component, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { LabelService } from "../../services/label.service";
+import { Label, LabelData } from "../../models/label.model";
+import { LabelComponent } from "../../components/label/label.component";
+import { ToastService } from "../../services/toast.service";
+import { PrintLabelsComponent } from "../admin/print-labels.component";
 
 @Component({
-  selector: 'app-labels-list',
+  selector: "app-labels-list",
   standalone: true,
   imports: [CommonModule, LabelComponent, PrintLabelsComponent],
-  templateUrl: './labels-list.component.html'
+  templateUrl: "./labels-list.component.html",
 })
 export class LabelsListComponent implements OnInit {
   labels: Label[] = [];
@@ -32,48 +32,58 @@ export class LabelsListComponent implements OnInit {
   loadLabels() {
     this.loading = true;
     this.error = null;
-    
+
     this.labelService.getLabels().subscribe({
       next: (response: any) => {
         this.labels = response.labels || response;
-        console.log('Frontend: Loaded labels:', this.labels);
+        console.log("Frontend: Loaded labels:", this.labels);
         if (this.labels.length > 0) {
-          console.log('Frontend: First label structure:', this.labels[0]);
-          console.log('Frontend: First label id field:', this.labels[0].id);
-          console.log('Frontend: First label label_id field:', this.labels[0].label_id);
+          console.log("Frontend: First label structure:", this.labels[0]);
+          console.log("Frontend: First label id field:", this.labels[0].id);
+          console.log(
+            "Frontend: First label label_id field:",
+            this.labels[0].label_id
+          );
         }
         this.loading = false;
       },
       error: (err) => {
-        this.error = 'Failed to load labels. Please try again.';
+        this.error = "Failed to load labels. Please try again.";
         this.loading = false;
-        console.error('Error loading labels:', err);
-      }
+        console.error("Error loading labels:", err);
+      },
     });
   }
 
   printLabel(labelId: string | undefined) {
     if (!labelId) {
-      this.toastService.error('Label ID is missing! Cannot print label.');
+      this.toastService.error("Label ID is missing! Cannot print label.");
       return;
     }
-    
-    console.log('Frontend: Attempting to print label with ID:', labelId);
-    console.log('Frontend: Label ID type:', typeof labelId);
-    console.log('Frontend: Label ID length:', labelId?.length);
-    
+
+    console.log("Frontend: Attempting to print label with ID:", labelId);
+    console.log("Frontend: Label ID type:", typeof labelId);
+    console.log("Frontend: Label ID length:", labelId?.length);
+
     this.labelService.printLabel(labelId).subscribe({
       next: (response) => {
-        console.log('Print job created:', response);
-        this.toastService.success(`Print job created successfully! Job ID: ${response.print_job_id.substring(0, 8)}...`);
+        console.log("Print job created:", response);
+        this.toastService.success(
+          `Print job created successfully! Job ID: ${response.print_job_id.substring(
+            0,
+            8
+          )}...`
+        );
         // Refresh the labels to update status
         this.loadLabels();
       },
       error: (err) => {
-        console.error('Error printing label:', err);
-        console.error('Error details:', err.error);
-        this.toastService.error('Failed to create print job. Please try again.');
-      }
+        console.error("Error printing label:", err);
+        console.error("Error details:", err.error);
+        this.toastService.error(
+          "Failed to create print job. Please try again."
+        );
+      },
     });
   }
 
@@ -97,7 +107,7 @@ export class LabelsListComponent implements OnInit {
       MILL: label.MILL || label.mill,
       DATE1: label.DATE1 || label.date1,
       TIME: label.TIME || label.time1,
-      LENGTH: label.LENGTH || label.length, 
+      LENGTH: label.LENGTH || label.length,
       BUNDLE_NO: label.BUNDLE_NO || label.bundle_no,
       PQD: label.PQD || label.pqd,
       UNIT: label.UNIT || label.unit,
@@ -114,20 +124,35 @@ export class LabelsListComponent implements OnInit {
 
   exportLabels() {
     this.exporting = true;
-    
+
     this.labelService.exportLabelsCSV().subscribe({
       next: (blob) => {
         console.log(blob);
-        const filename = `labels_${new Date().toISOString().split('T')[0]}.csv`;
+        const filename = `labels_${new Date().toISOString().split("T")[0]}.csv`;
         this.labelService.downloadCSV(blob, filename);
-        this.toastService.success('Labels exported successfully!');
+        this.toastService.success("Labels exported successfully!");
         this.exporting = false;
       },
       error: (error) => {
-        console.error('Error exporting labels:', error);
-        this.toastService.error('Failed to export labels');
+        console.error("Error exporting labels:", error);
+        this.toastService.error("Failed to export labels");
         this.exporting = false;
-      }
+      },
     });
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "failed":
+        return "bg-red-100 text-red-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "processing":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   }
 }
