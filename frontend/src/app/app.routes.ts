@@ -38,7 +38,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
-    loadComponent: () => import('./pages/admin/print-labels.component').then(m => m.PrintLabelsComponent),
+    loadComponent: () => import('./pages/print-labels/print-labels.component').then(m => m.PrintLabelsComponent),
     canActivate: [authGuard, adminGuard]
   },
   {

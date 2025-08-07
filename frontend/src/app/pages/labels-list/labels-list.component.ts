@@ -4,7 +4,7 @@ import { LabelService } from "../../services/label.service";
 import { Label, LabelData } from "../../models/label.model";
 import { LabelComponent } from "../../components/label/label.component";
 import { ToastService } from "../../services/toast.service";
-import { PrintLabelsComponent } from "../admin/print-labels.component";
+import { PrintLabelsComponent } from "../print-labels/print-labels.component";
 
 @Component({
   selector: "app-labels-list",
@@ -143,7 +143,7 @@ export class LabelsListComponent implements OnInit {
 
   getStatusClass(status: string): string {
     switch (status) {
-      case "completed":
+      case "success":
         return "bg-green-100 text-green-800";
       case "failed":
         return "bg-red-100 text-red-800";

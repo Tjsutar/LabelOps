@@ -45,7 +45,7 @@ BEGIN
 				label_record->>'SECTION',
 				label_record->>'DATE',
 				user_uuid,
-				'pending',
+				'success',
 				false
 			);
 

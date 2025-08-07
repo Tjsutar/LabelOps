@@ -236,7 +236,7 @@ export class PrintJobsComponent implements OnInit {
 
   getStatusClass(status: string): string {
     switch (status) {
-      case "completed":
+      case "success":
         return "bg-green-100 text-green-800";
       case "failed":
         return "bg-red-100 text-red-800";

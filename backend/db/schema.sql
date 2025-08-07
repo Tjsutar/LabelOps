@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS labels (
 	section VARCHAR(255) NOT NULL,
 	date VARCHAR(20) NOT NULL,
 	user_id UUID NOT NULL REFERENCES users(id),
-	status VARCHAR(50) NOT NULL DEFAULT 'completed',
+	status VARCHAR(50) NOT NULL DEFAULT 'success',
 	is_duplicate BOOLEAN NOT NULL DEFAULT false,
 	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 	updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS print_jobs (
 	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	label_id UUID NOT NULL REFERENCES labels(id),
 	user_id UUID NOT NULL REFERENCES users(id),
-	status VARCHAR(50) NOT NULL DEFAULT 'completed',
+	status VARCHAR(50) NOT NULL DEFAULT 'success',
 	error_message TEXT,
 	retry_count INTEGER NOT NULL DEFAULT 0,
 	max_retries INTEGER NOT NULL DEFAULT 3,
