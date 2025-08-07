@@ -4,11 +4,12 @@ import { LabelService } from '../../services/label.service';
 import { Label, LabelData } from '../../models/label.model';
 import { LabelComponent } from '../../components/label/label.component';
 import { ToastService } from '../../services/toast.service';
+import { PrintLabelsComponent } from '../admin/print-labels.component';
 
 @Component({
   selector: 'app-labels-list',
   standalone: true,
-  imports: [CommonModule, LabelComponent],
+  imports: [CommonModule, LabelComponent, PrintLabelsComponent],
   templateUrl: './labels-list.component.html'
 })
 export class LabelsListComponent implements OnInit {
