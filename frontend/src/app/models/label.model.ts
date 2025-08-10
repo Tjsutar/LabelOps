@@ -1,4 +1,6 @@
 export interface LabelData {
+  actual_label_id: string;
+  label_id: string;
   LOCATION?: string;
   BUNDLE_NO: number;
   PQD: string;
@@ -20,6 +22,7 @@ export interface LabelData {
 }
 
 export interface Label {
+  actual_label_id: string;
   id: string;
   label_id: string;
   location?: string;

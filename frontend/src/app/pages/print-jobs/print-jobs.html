@@ -96,13 +96,14 @@
                   (click)="viewZPL(job)"
                   class="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
                 >
-                  View ZPL
+                  View ZPL in console
                 </button> -->
                 <button
                   (click)="retryPrintJob(job.id)"
                   [disabled]="loading || !job.actual_label_id"
                   class="px-3 py-1 bg-blue-600 text-white border-none rounded cursor-pointer text-xs hover:bg-blue-700">
-                  Retry Print
+                  
+                  Re-Print
                 </button>
               </div>
             </td>

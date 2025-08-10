@@ -93,7 +93,9 @@ export class LabelsListComponent implements OnInit {
 
   previewLabel(label: any) {
     // Convert the label data to the format expected by the label component
-    this.selectedLabel = {
+    this.selectedLabel = {    
+      actual_label_id: label.actual_label_id,
+      label_id: label.id || label.label_id,
       ID: label.id || label.ID,
       HEAT_NO: label.HEAT_NO || label.heat_no,
       PRODUCT_HEADING: label.PRODUCT_HEADING || label.product_heading,

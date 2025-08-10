@@ -12,13 +12,13 @@ import * as QRCode from 'qrcode';
 import { LabelData } from '../../models/label.model';
 
 @Component({
-  selector: 'app-label',
+  selector: 'app-label',    
   standalone: true,
   imports: [CommonModule],
   templateUrl: './label.html',
 })
 export class LabelComponent implements AfterViewInit, OnChanges {
-  @Input() labelData!: LabelData;
+  @Input() labelData!: LabelData;   
 
   @Input() qrUrl: string = '';
 
@@ -41,7 +41,8 @@ export class LabelComponent implements AfterViewInit, OnChanges {
   private async generateQrCodes() {
     // Generate QR URL if not provided
     if (!this.qrUrl && this.labelData) {
-      this.qrUrl = `https://madeinindia.qcin.org/product-details/${this.labelData.ID || 'default'}/MM_${this.labelData.HEAT_NO || 'default'}_${this.labelData.ID || 'default'}`;
+      this.qrUrl = `https://madeinindia.qcin.org/product-details/${this.labelData.label_id || 'default'}/MM_${this.labelData.HEAT_NO || 'default'}_${this.labelData.ID || 'default'}`;
+      console.log(this.labelData.label_id);
     }
 
     if (!this.qrUrl || !this.canvas1Ref || !this.canvas2Ref) {

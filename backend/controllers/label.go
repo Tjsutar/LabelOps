@@ -845,7 +845,7 @@ func ExportPrintJobsCSV(c *gin.Context) {
 	}
 
 	// Build query for print jobs
-	query := `SELECT id, label_id, user_id, status, max_retries, retries, 
+	query := `SELECT id, label_id, user_id, status, max_retries, retry_count, 
 		 created_at, updated_at, actual_label_id
 			  FROM print_jobs WHERE 1=1`
 	args := []interface{}{}

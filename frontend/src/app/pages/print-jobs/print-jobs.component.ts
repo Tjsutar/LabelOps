@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { LabelService } from "../../services/label.service";
 import { ToastService } from "../../services/toast.service";
+import { PrinterService } from "src/app/services/printer.service";
 
 interface PrintJob {
   id: string;
@@ -34,7 +35,8 @@ export class PrintJobsComponent implements OnInit {
 
   constructor(
     private labelService: LabelService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private printerService: PrinterService
   ) {}
 
   ngOnInit() {
@@ -62,9 +64,13 @@ export class PrintJobsComponent implements OnInit {
   retryPrintJob(jobId: string) {
     this.labelService.retryPrintJob(jobId).subscribe({
       next: (response) => {
-        console.log("Print job retried:", response);
         this.toastService.success("Print job retry initiated successfully!");
+        
         this.loadPrintJobs();
+        console.log(response);
+        this.getPrinter();
+        this.printerService.printZPL(response.zpl_content);
+        // this.viewZPL(response);
       },
       error: (err) => {
         console.error("Error retrying print job:", err);
@@ -74,8 +80,11 @@ export class PrintJobsComponent implements OnInit {
   }
 
   viewZPL(job: PrintJob) {
-    this.selectedZPL = job.zpl_content;
-    this.showZPLModal = true;
+    // this.selectedZPL = job.zpl_content;
+    // this.showZPLModal = true;
+    // this.getPrinter();
+    // this.printerService.printZPL(job.zpl_content);
+    // console.log(job.zpl_content);
   }
 
   closeZPLModal() {
@@ -107,7 +116,6 @@ export class PrintJobsComponent implements OnInit {
 
     this.labelService.exportPrintJobsCSV().subscribe({
       next: (blob) => {
-        console.log(blob);
         const filename = `print_jobs_${
           new Date().toISOString().split("T")[0]
         }.csv`;
@@ -119,6 +127,17 @@ export class PrintJobsComponent implements OnInit {
         console.error("Error exporting print jobs:", error);
         this.toastService.error("Failed to export print jobs");
         this.exporting = false;
+      },
+    });
+  }
+
+  getPrinter() {
+    this.printerService.getDefaultPrinter().subscribe({
+      next: (printer) => {
+        console.log("Default printer:", printer);
+      },
+      error: (error) => {
+        console.error("Error getting default printer:", error);
       },
     });
   }

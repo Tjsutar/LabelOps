@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable, from, throwError } from 'rxjs';
+import { Observable, from, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import * as ZplImage from 'zpl-image';
+
 
 declare var BrowserPrint: any;
 
@@ -131,4 +133,29 @@ export class PrinterService {
       })
     );
   }
+
+  /**
+   * Preview ZPL: convert ZPL string to PNG image data URL
+   * @param zplContent ZPL command string
+   * @returns Observable<string> base64 image URL
+   */
+  // previewZPL(zplContent: string): Observable<string> {
+  //   try {
+  //     const zplImage = new ZplImage({
+  //       width: 384, // label width in dots
+  //       height: 600, // label height in dots
+  //       scale: 2 // scaling factor
+  //     });
+      
+  //     const imageDataUrl = zplImage.render(zplContent);
+  //     // imageDataUrl is a base64 PNG data URL string
+
+  //     return of(imageDataUrl);
+  //   } catch (error) {
+  //     console.error('Error rendering ZPL preview:', error);
+  //     return of('');
+  //   }
+  // }
+
+
 } 
