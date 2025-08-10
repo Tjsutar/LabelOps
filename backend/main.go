@@ -38,7 +38,7 @@ func main() {
 	r.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
+		AllowedHeaders:   []string{"Origin", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 		Debug:            true,
 	}))
@@ -67,6 +67,7 @@ func main() {
 
 			// Label routes
 			protected.POST("/labels/batch", controllers.BatchLabelProcess)
+			// protected.POST("/labels/batch", controllers.BatchLabelProcessHandler)
 			protected.GET("/labels", controllers.GetLabels)
 			protected.GET("/labels/:id", controllers.GetLabelByID)
 			protected.POST("/labels/print", controllers.PrintLabel)
