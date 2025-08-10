@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { LabelService } from "../../services/label.service";
 import { ToastService } from "../../services/toast.service";
 import { PrinterService } from "src/app/services/printer.service";
+import { SearchByIdComponent } from "src/app/components/search-by-id.component";
 
 interface PrintJob {
   id: string;
@@ -21,7 +22,7 @@ interface PrintJob {
 @Component({
   selector: "app-print-jobs",
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SearchByIdComponent],
   templateUrl: "./print-jobs.html",
   styles: [],
 })
