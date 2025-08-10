@@ -73,14 +73,14 @@ func BatchLabelProcess(c *gin.Context) {
 		return
 	}
 
-	// Extract new labels for printing - these should contain the DB-generated IDs
+	// Extract new labels for printing - these should contain the DB-generated IDs (business IDs provided)
 	newLabelsInterface, exists := result["new_labels"]
 	if !exists {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid batch result: missing new_labels"})
 		return
 	}
 
-	// Convert new labels to slice of maps to access both label data and DB IDs
+	// Convert new labels to slice of maps to access both label data and business IDs
 	newLabelsJSON, err := json.Marshal(newLabelsInterface)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process new labels", "details": err.Error()})
@@ -98,13 +98,13 @@ func BatchLabelProcess(c *gin.Context) {
 	var printJobIDs []string
 
 	for _, labelMap := range newLabelsWithIDs {
-		// Extract the business ID (bundle number) to query for the database UUID
+		// Extract the business ID (bundle number / external label ID)
 		businessID, ok := labelMap["ID"].(string)
 		if !ok {
 			log.Printf("Invalid business ID in new_labels result: %v", labelMap["ID"])
 			continue
 		}
-		
+
 		// Query the database to get the actual UUID for this label
 		var labelUUID uuid.UUID
 		err := db.DB.QueryRow(`
@@ -113,7 +113,6 @@ func BatchLabelProcess(c *gin.Context) {
 			ORDER BY created_at DESC 
 			LIMIT 1
 		`, businessID, userModel.ID).Scan(&labelUUID)
-		
 		if err != nil {
 			log.Printf("Failed to find database UUID for label %s: %v", businessID, err)
 			continue
@@ -125,7 +124,7 @@ func BatchLabelProcess(c *gin.Context) {
 			log.Printf("Failed to marshal label data: %v", err)
 			continue
 		}
-		
+
 		var labelData models.LabelData
 		if err := json.Unmarshal(labelDataJSON, &labelData); err != nil {
 			log.Printf("Failed to unmarshal label data: %v", err)
@@ -148,8 +147,8 @@ func BatchLabelProcess(c *gin.Context) {
 		}
 		zplPaths = append(zplPaths, zplPath)
 
-		// Create print job record in database using the actual DB label ID
-		printJobID, err := createPrintJob(labelUUID, userModel.ID, zplPath)
+		// Create print job record in database using the actual DB label ID and store business ID as actual_label_id
+		printJobID, err := createPrintJob(labelUUID, userModel.ID, zplPath, businessID)
 		if err != nil {
 			log.Printf("Failed to create print job for label %s: %v", businessID, err)
 			// Continue processing other labels, but log the error
@@ -205,8 +204,6 @@ func BatchLabelProcess(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// Helper functions for BatchLabelProcess
-
 // ensurePrinterDirectories creates necessary directories for ZPL files and batch scripts
 func ensurePrinterDirectories() error {
 	dirs := []string{
@@ -214,7 +211,6 @@ func ensurePrinterDirectories() error {
 		"printers/zpl",
 		"printers/bat",
 	}
-
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
@@ -223,12 +219,11 @@ func ensurePrinterDirectories() error {
 	return nil
 }
 
-
 // convertLabelDataToLabelWithID converts LabelData to Label model using a specific UUID from the database
 func convertLabelDataToLabelWithID(labelData models.LabelData, userID uuid.UUID, labelID uuid.UUID) models.Label {
 	return models.Label{
-		ID:             labelID, // Use the provided UUID from database
-		LabelID:        getStringValue(labelData.ID), // Use PQD as the label identifier
+		ID:             labelID,
+		LabelID:        labelData.ID,
 		Location:       labelData.LOCATION,
 		BundleNo:       labelData.BUNDLE_NO,
 		BundleType:     labelData.BUNDLE_TYPE,
@@ -240,7 +235,7 @@ func convertLabelDataToLabelWithID(labelData models.LabelData, userID uuid.UUID,
 		ProductHeading: labelData.PRODUCT_HEADING,
 		IsiBottom:      labelData.ISI_BOTTOM,
 		IsiTop:         labelData.ISI_TOP,
-		ChargeDtm:      getStringValue(labelData.ID), // Use ID as charge_dtm
+		ChargeDtm:      "",
 		Mill:           labelData.MILL,
 		Grade:          labelData.GRADE,
 		UrlApikey:      labelData.URL_APIKEY,
@@ -255,271 +250,73 @@ func convertLabelDataToLabelWithID(labelData models.LabelData, userID uuid.UUID,
 	}
 }
 
-// getStringValue safely converts *string to string
-func getStringValue(s *string) string {
-	if s != nil {
-		return *s
-	}
-	return ""
-}
-
-// createPrintJob creates a print job record in the database
-func createPrintJob(labelID, userID uuid.UUID, zplPath string) (string, error) {
+// createPrintJob inserts a print job. If actualLabelID is provided, it is stored in actual_label_id column
+func createPrintJob(labelID uuid.UUID, userID uuid.UUID, zplPath string, actualLabelID ...string) (string, error) {
 	printJobID := uuid.New()
-
 	// Read ZPL content from file
 	zplContent, err := os.ReadFile(zplPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read ZPL file: %w", err)
 	}
-
-	// Insert print job into database
-	_, err = db.DB.Exec(`
-		INSERT INTO print_jobs (id, label_id, user_id, status, zpl_content, max_retries, retry_count, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-	`, printJobID, labelID, userID, "pending", string(zplContent), 3, 0)
-
-	if err != nil {
-		return "", fmt.Errorf("failed to insert print job: %w", err)
+	status := "pending"
+	maxRetries := 3
+	retryCount := 0
+	if len(actualLabelID) > 0 {
+		_, err = db.DB.Exec(`
+			INSERT INTO print_jobs (
+				id, label_id, actual_label_id, user_id, status, zpl_content, max_retries, retry_count, created_at, updated_at
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+		`, printJobID, labelID, actualLabelID[0], userID, status, string(zplContent), maxRetries, retryCount)
+		if err != nil {
+			return "", fmt.Errorf("failed to insert print job: %w", err)
+		}
+	} else {
+		_, err = db.DB.Exec(`
+			INSERT INTO print_jobs (
+				id, label_id, user_id, status, zpl_content, max_retries, retry_count, created_at, updated_at
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+		`, printJobID, labelID, userID, status, string(zplContent), maxRetries, retryCount)
+		if err != nil {
+			return "", fmt.Errorf("failed to insert print job: %w", err)
+		}
 	}
-
 	return printJobID.String(), nil
 }
 
-// updatePrintJobStatus updates the status of a print job
-func updatePrintJobStatus(printJobID, status, errorMessage string) error {
-	jobUUID, err := uuid.Parse(printJobID)
-	if err != nil {
-		return fmt.Errorf("invalid print job ID: %w", err)
-	}
-
-	_, err = db.DB.Exec(`
-		UPDATE print_jobs 
+// updatePrintJobStatus updates the status and optional error message for a print job
+func updatePrintJobStatus(jobID string, status string, errorMessage string) {
+	_, err := db.DB.Exec(`
+		UPDATE print_jobs
 		SET status = $1, error_message = $2, updated_at = NOW()
 		WHERE id = $3
-	`, status, errorMessage, jobUUID)
-
+	`, status, nullableString(errorMessage), jobID)
 	if err != nil {
-		return fmt.Errorf("failed to update print job status: %w", err)
+		log.Printf("Failed to update print job status for %s: %v", jobID, err)
 	}
-
-	return nil
 }
 
-// GetLabelByID retrieves a specific label
-func GetLabelByID(c *gin.Context) {
-	labelID := c.Param("id")
-
-	// Parse label ID
-	labelUUID, err := uuid.Parse(labelID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid label ID"})
-		return
-	}
-
-	// Get label
-	var label models.Label
-	err = db.DB.QueryRow(
-		`SELECT id, label_id, location, bundle_no, pqd, unit, time, length, 
-		 heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
-		 url_apikey, weight, section, date, user_id, status, 
-		 is_duplicate, created_at, updated_at 
-		 FROM labels WHERE id = $1`,
-		labelUUID,
-	).Scan(
-		&label.ID, &label.LabelID, &label.Location, &label.BundleNo, &label.PQD,
-		&label.Unit, &label.Time, &label.Length, &label.HeatNo, &label.ProductHeading,
-		&label.IsiBottom, &label.IsiTop, &label.ChargeDtm, &label.Mill, &label.Grade,
-		&label.UrlApikey, &label.Weight, &label.Section, &label.Date,
-		&label.UserID, &label.Status, &label.IsDuplicate,
-		&label.CreatedAt, &label.UpdatedAt,
-	)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Label not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch label"})
-		return
-	}
-
-	c.JSON(http.StatusOK, label)
-}
-
-// PrintLabel prints a specific label
-func PrintLabel(c *gin.Context) {
-	var request struct {
-		ID string `json:"id" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&request); err != nil {
-		log.Printf("PrintLabel: Invalid request body - %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
-		return
-	}
-
-	log.Printf("PrintLabel: Received request with label_id: %s", request.ID)
-
-	user, _ := c.Get("user")
-	userModel := user.(models.User)
-
-	// Fetch label using the label_id (string), but retrieve its UUID `id`
-	var label models.Label
-	err := db.DB.QueryRow(`
-		SELECT id, label_id, location, bundle_no, pqd, unit, time, length,
-		       heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade,
-		       url_apikey, weight, section, date, user_id, status, is_duplicate,
-		       created_at, updated_at
-		FROM labels
-		WHERE id = $1
-	`, request.ID).Scan(
-		&label.ID, &label.LabelID, &label.Location, &label.BundleNo, &label.PQD,
-		&label.Unit, &label.Time, &label.Length, &label.HeatNo, &label.ProductHeading,
-		&label.IsiBottom, &label.IsiTop, &label.ChargeDtm, &label.Mill, &label.Grade,
-		&label.UrlApikey, &label.Weight, &label.Section, &label.Date,
-		&label.UserID, &label.Status, &label.IsDuplicate,
-		&label.CreatedAt, &label.UpdatedAt,
-	)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			log.Printf("PrintLabel: No label found for label_id: %s", request.ID)
-			c.JSON(http.StatusNotFound, gin.H{
-				"error":   "Label not found",
-				"details": fmt.Sprintf("No label found with label_id: %s", request.ID),
-			})
-			return
-		}
-		log.Printf("PrintLabel: Database error fetching label: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to fetch label",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	log.Printf("PrintLabel: Found label UUID: %s", label.ID.String())
-
-	// Generate ZPL content
-	zplContent := utils.GenerateLabelZPL(label)
-	log.Printf("PrintLabel: ZPL content generated (length: %d)", len(zplContent))
-	log.Printf("PrintLabel: ZPL content generated: %s", zplContent)
-
-	// Create print job
-	printJobID := uuid.New()
-	_, err = db.DB.Exec(`
-		INSERT INTO print_jobs (id, label_id, user_id, status, zpl_content, max_retries)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, printJobID, label.ID, userModel.ID, "pending", zplContent, 3)
-
-	if err != nil {
-		log.Printf("PrintLabel: Failed to insert print job: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to create print job",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	log.Printf("PrintLabel: Print job created with ID: %s", printJobID.String())
-
-	// Audit log
-	utils.LogAudit(c, userModel.ID, "print_label", "labels", &label.LabelID,
-		"Label print job created", map[string]interface{}{
-			"print_job_id": printJobID.String(),
-			"label_id":     label.LabelID,
-		})
-
-	c.JSON(http.StatusOK, gin.H{
-		"message":      "Print job created successfully",
-		"print_job_id": printJobID.String(),
-		"zpl_content":  zplContent,
-	})
-}
-
-// ExportLabelsCSV exports labels as CSV
-func ExportLabelsCSV(c *gin.Context) {
-	userVal, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
-	userModel, ok := userVal.(models.User)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user object"})
-		return
-	}
-
-	query := `SELECT label_id, location, bundle_no, pqd, unit, time, length, 
-			  heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
-			  url_apikey, weight, section, date, status, is_duplicate, created_at 
-			  FROM labels WHERE 1=1`
-	args := []interface{}{}
-
-	if userModel.Role != "admin" {
-		query += " AND user_id = $1"
-		args = append(args, userModel.ID)
-	}
-
-	query += " ORDER BY created_at DESC"
-
-	fmt.Println("Running Query:", query)
-	fmt.Println("With Args:", args)
-
-	rows, err := db.DB.Query(query, args...)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to fetch labels for export",
-			"details": err.Error(),
-		})
-		return
-	}
-	defer rows.Close()
-
-	csvData := utils.GenerateLabelsCSV(rows)
-
-	if len(csvData) == 0 {
-		c.JSON(http.StatusNoContent, gin.H{"message": "No data to export"})
-		return
-	}
-
-	c.Header("Content-Type", "text/csv")
-	c.Header("Content-Disposition", "attachment; filename=labels.csv")
-
-	utils.LogAudit(c, userModel.ID, "export_csv", "labels", nil, "Exported labels to CSV")
-
-	c.Data(http.StatusOK, "text/csv", []byte(csvData))
-}
-
-// GetPrintJobs retrieves print jobs
+// GetPrintJobs retrieves print jobs (includes actual_label_id for UI)
 func GetPrintJobs(c *gin.Context) {
 	userVal, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-
 	userModel, ok := userVal.(models.User)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user object"})
 		return
 	}
 
-	query := `SELECT id, label_id, user_id, status, zpl_content, max_retries, 
-			  created_at, updated_at 
-			  FROM print_jobs WHERE 1=1`
+	query := `SELECT id, label_id, actual_label_id, user_id, status, error_message, zpl_content, max_retries,retry_count,
+				created_at, updated_at
+				FROM print_jobs WHERE 1=1`
 	args := []interface{}{}
-
 	if userModel.Role != "admin" {
 		query += " AND user_id = $1"
 		args = append(args, userModel.ID)
 	}
-
 	query += " ORDER BY created_at DESC"
-
-	fmt.Println("QUERY:", query)
-	fmt.Println("ARGS:", args)
 
 	rows, err := db.DB.Query(query, args...)
 	if err != nil {
@@ -531,13 +328,16 @@ func GetPrintJobs(c *gin.Context) {
 	var printJobs []map[string]interface{}
 	for rows.Next() {
 		var (
-			id, labelID, userID, status, zplContent string
-			maxRetries                              int
-			createdAt, updatedAt                    sql.NullTime
+			id, labelID, actualLabelID, userID, status string
+			errorMessage                               sql.NullString
+			zplContent                                 string
+			maxRetries                                 int
+			retryCount                                 int
+			createdAt, updatedAt                       sql.NullTime
 		)
 		err := rows.Scan(
-			&id, &labelID, &userID, &status, &zplContent, &maxRetries,
-			&createdAt, &updatedAt,
+			&id, &labelID, &actualLabelID, &userID, &status, &errorMessage, &zplContent, &maxRetries,
+			&retryCount, &createdAt, &updatedAt,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan print job", "details": err.Error()})
@@ -545,14 +345,17 @@ func GetPrintJobs(c *gin.Context) {
 		}
 
 		job := map[string]interface{}{
-			"id":          id,
-			"label_id":    labelID,
-			"user_id":     userID,
-			"status":      status,
-			"zpl_content": zplContent,
-			"max_retries": maxRetries,
-			"created_at":  nilIfInvalidTime(createdAt),
-			"updated_at":  nilIfInvalidTime(updatedAt),
+			"id":              id,
+			"label_id":        labelID,
+			"actual_label_id": actualLabelID,
+			"user_id":         userID,
+			"status":          status,
+			"error_message":   nilIfInvalidString(errorMessage),
+			"zpl_content":     zplContent,
+			"max_retries":     maxRetries,
+			"retry_count":     retryCount,
+			"created_at":      nilIfInvalidTime(createdAt),
+			"updated_at":      nilIfInvalidTime(updatedAt),
 		}
 		printJobs = append(printJobs, job)
 	}
@@ -560,6 +363,7 @@ func GetPrintJobs(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"print_jobs": printJobs, "count": len(printJobs)})
 }
 
+// Helpers
 func nilIfInvalidTime(t sql.NullTime) interface{} {
 	if t.Valid {
 		return t.Time
@@ -567,160 +371,25 @@ func nilIfInvalidTime(t sql.NullTime) interface{} {
 	return nil
 }
 
-// GetPrintJobByID retrieves a specific print job
-func GetPrintJobByID(c *gin.Context) {
-	jobID := c.Param("id")
-
-	// Parse job ID
-	jobUUID, err := uuid.Parse(jobID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid print job ID"})
-		return
+func nilIfInvalidString(s sql.NullString) interface{} {
+	if s.Valid {
+		return s.String
 	}
-
-	// Get print job
-	var (
-		id, labelID, userID, status, zplContent, errorMessage string
-		maxRetries, retryCount                                int
-		createdAt, updatedAt                                  sql.NullTime
-	)
-	err = db.DB.QueryRow(
-		`SELECT id, label_id, user_id, status, zpl_content, max_retries, 
-		 retry_count, error_message, created_at, updated_at 
-		 FROM print_jobs WHERE id = $1`,
-		jobUUID,
-	).Scan(
-		&id, &labelID, &userID, &status, &zplContent, &maxRetries, &retryCount,
-		&errorMessage, &createdAt, &updatedAt,
-	)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Print job not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch print job"})
-		return
-	}
-
-	job := map[string]interface{}{
-		"id":            id,
-		"label_id":      labelID,
-		"user_id":       userID,
-		"status":        status,
-		"zpl_content":   zplContent,
-		"max_retries":   maxRetries,
-		"retry_count":   retryCount,
-		"error_message": errorMessage,
-		"created_at":    createdAt.Time,
-		"updated_at":    updatedAt.Time,
-	}
-
-	c.JSON(http.StatusOK, job)
+	return nil
 }
 
-// RetryPrintJob retries a failed print job
-func RetryPrintJob(c *gin.Context) {
-	var request struct {
-		JobID string `json:"job_id" binding:"required"`
+func nullableString(s string) interface{} {
+	if s == "" {
+		return nil
 	}
-
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
-
-	user, _ := c.Get("user")
-	userModel := user.(models.User)
-
-	// Parse job ID
-	jobUUID, err := uuid.Parse(request.JobID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid print job ID"})
-		return
-	}
-
-	// Update print job status
-	_, err = db.DB.Exec(
-		`UPDATE print_jobs SET status = 'pending', retry_count = retry_count + 1, 
-		 updated_at = NOW() WHERE id = $1 AND user_id = $2`,
-		jobUUID, userModel.ID,
-	)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retry print job"})
-		return
-	}
-
-	// Log audit
-	utils.LogAudit(c, userModel.ID, "retry_print_job", "print_jobs", &request.JobID, "Print job retry initiated")
-
-	c.JSON(http.StatusOK, gin.H{"message": "Print job retry initiated"})
+	return s
 }
 
-// ExportPrintJobsCSV exports print jobs as CSV
-func ExportPrintJobsCSV(c *gin.Context) {
-	userVal, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
-	userModel, ok := userVal.(models.User)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user object"})
-		return
-	}
-
-	// Build query for print jobs
-	query := `SELECT id, label_id, user_id, status, max_retries, retries, 
-		 created_at, updated_at 
-			  FROM print_jobs WHERE 1=1`
-	args := []interface{}{}
-
-	// Add user filter for non-admin users
-	if userModel.Role != "admin" {
-		query += " AND user_id = $1"
-		args = append(args, userModel.ID)
-	}
-
-	// Add optional status filter
-	if status := c.Query("status"); status != "" {
-		if userModel.Role != "admin" {
-			query += " AND status = $2"
-		} else {
-			query += " AND status = $1"
-		}
-		args = append(args, status)
-	}
-
-	query += " ORDER BY created_at DESC"
-
-	log.Printf("Running Print Jobs Export Query: %s", query)
-	log.Printf("With Args: %v", args)
-
-	rows, err := db.DB.Query(query, args...)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to fetch print jobs for export",
-			"details": err.Error(),
-		})
-		return
-	}
-	defer rows.Close()
-
-	csvData := utils.GeneratePrintJobsCSV(rows)
-
-	if len(csvData) == 0 {
-		c.JSON(http.StatusNoContent, gin.H{"message": "No print jobs data to export"})
-		return
-	}
-
-	c.Header("Content-Type", "text/csv")
-	c.Header("Content-Disposition", "attachment; filename=print_jobs.csv")
-
-	utils.LogAudit(c, userModel.ID, "export_csv", "print_jobs", nil, "Exported print jobs to CSV")
-
-	c.Data(http.StatusOK, "text/csv", []byte(csvData))
-}
+// Helper to safely dereference *string
+// func getStringValue(s *string) string {
+// 	if s == nil { return "" }
+// 	return *s
+// }
 
 // GetLabels retrieves labels with filtering
 func GetLabels(c *gin.Context) {
@@ -875,4 +544,354 @@ func GetLabels(c *gin.Context) {
 		"user_role": userModel.Role,
 		"debug":     "GetLabels function executed at " + time.Now().Format("2006-01-02 15:04:05"),
 	})
+}
+
+// GetPrintJobByID retrieves a specific print job
+func GetPrintJobByID(c *gin.Context) {
+	jobID := c.Param("id")
+
+	// Parse job ID
+	jobUUID, err := uuid.Parse(jobID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid print job ID"})
+		return
+	}
+
+	// Get print job
+	var (
+		id, labelID, userID, status, zplContent, errorMessage string
+		maxRetries, retryCount                                int
+		createdAt, updatedAt                                  sql.NullTime
+	)
+	err = db.DB.QueryRow(
+		`SELECT id, label_id, user_id, status, zpl_content, max_retries, 
+		 retry_count, error_message, created_at, updated_at 
+		 FROM print_jobs WHERE id = $1`,
+		jobUUID,
+	).Scan(
+		&id, &labelID, &userID, &status, &zplContent, &maxRetries, &retryCount,
+		&errorMessage, &createdAt, &updatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Print job not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch print job"})
+		return
+	}
+
+	job := map[string]interface{}{
+		"id":            id,
+		"label_id":      labelID,
+		"user_id":       userID,
+		"status":        status,
+		"zpl_content":   zplContent,
+		"max_retries":   maxRetries,
+		"retry_count":   retryCount,
+		"error_message": errorMessage,
+		"created_at":    createdAt.Time,
+		"updated_at":    updatedAt.Time,
+	}
+
+	c.JSON(http.StatusOK, job)
+}
+
+// PrintLabel prints a specific label
+func PrintLabel(c *gin.Context) {
+	var request struct {
+		ID string `json:"id" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Printf("PrintLabel: Invalid request body - %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
+		return
+	}
+
+	log.Printf("PrintLabel: Received request with label_id: %s", request.ID)
+
+	user, _ := c.Get("user")
+	userModel := user.(models.User)
+
+	// Fetch label using the label_id (string), but retrieve its UUID `id`
+	var label models.Label
+	err := db.DB.QueryRow(`
+		SELECT id, label_id, location, bundle_no, pqd, unit, time, length,
+		       heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade,
+		       url_apikey, weight, section, date, user_id, status, is_duplicate,
+		       created_at, updated_at
+		FROM labels
+		WHERE id = $1
+	`, request.ID).Scan(
+		&label.ID, &label.LabelID, &label.Location, &label.BundleNo, &label.PQD,
+		&label.Unit, &label.Time, &label.Length, &label.HeatNo, &label.ProductHeading,
+		&label.IsiBottom, &label.IsiTop, &label.ChargeDtm, &label.Mill, &label.Grade,
+		&label.UrlApikey, &label.Weight, &label.Section, &label.Date,
+		&label.UserID, &label.Status, &label.IsDuplicate,
+		&label.CreatedAt, &label.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("PrintLabel: No label found for label_id: %s", request.ID)
+			c.JSON(http.StatusNotFound, gin.H{
+				"error":   "Label not found",
+				"details": fmt.Sprintf("No label found with label_id: %s", request.ID),
+			})
+			return
+		}
+		log.Printf("PrintLabel: Database error fetching label: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to fetch label",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	log.Printf("PrintLabel: Found label UUID: %s", label.ID.String())
+
+	// Generate ZPL content
+	zplContent := utils.GenerateLabelZPL(label)
+	log.Printf("PrintLabel: ZPL content generated (length: %d)", len(zplContent))
+	log.Printf("PrintLabel: ZPL content generated: %s", zplContent)
+
+	// Create print job
+	printJobID := uuid.New()
+	_, err = db.DB.Exec(`
+		INSERT INTO print_jobs (id, label_id, user_id, status, zpl_content, max_retries)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, printJobID, label.ID, userModel.ID, "pending", zplContent, 3)
+
+	if err != nil {
+		log.Printf("PrintLabel: Failed to insert print job: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to create print job",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	log.Printf("PrintLabel: Print job created with ID: %s", printJobID.String())
+
+	// Audit log
+	utils.LogAudit(c, userModel.ID, "print_label", "labels", &label.LabelID,
+		"Label print job created", map[string]interface{}{
+			"print_job_id": printJobID.String(),
+			"label_id":     label.LabelID,
+		})
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":      "Print job created successfully",
+		"print_job_id": printJobID.String(),
+		"zpl_content":  zplContent,
+	})
+}
+
+// ExportLabelsCSV exports labels as CSV
+func ExportLabelsCSV(c *gin.Context) {
+	userVal, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userModel, ok := userVal.(models.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user object"})
+		return
+	}
+
+	query := `SELECT label_id, location, bundle_no, pqd, unit, time, length, 
+			  heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
+			  url_apikey, weight, section, date, status, is_duplicate, created_at 
+			  FROM labels WHERE 1=1`
+	args := []interface{}{}
+
+	if userModel.Role != "admin" {
+		query += " AND user_id = $1"
+		args = append(args, userModel.ID)
+	}
+
+	query += " ORDER BY created_at DESC"
+
+	fmt.Println("Running Query:", query)
+	fmt.Println("With Args:", args)
+
+	rows, err := db.DB.Query(query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to fetch labels for export",
+			"details": err.Error(),
+		})
+		return
+	}
+	defer rows.Close()
+
+	csvData := utils.GenerateLabelsCSV(rows)
+
+	if len(csvData) == 0 {
+		c.JSON(http.StatusNoContent, gin.H{"message": "No data to export"})
+		return
+	}
+
+	c.Header("Content-Type", "text/csv")
+	c.Header("Content-Disposition", "attachment; filename=labels.csv")
+
+	utils.LogAudit(c, userModel.ID, "export_csv", "labels", nil, "Exported labels to CSV")
+
+	c.Data(http.StatusOK, "text/csv", []byte(csvData))
+}
+
+// GetLabelByID retrieves a specific label
+func GetLabelByID(c *gin.Context) {
+	labelID := c.Param("id")
+
+	// Parse label ID
+	labelUUID, err := uuid.Parse(labelID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid label ID"})
+		return
+	}
+
+	// Get label
+	var label models.Label
+	err = db.DB.QueryRow(
+		`SELECT id, label_id, location, bundle_no, pqd, unit, time, length, 
+		 heat_no, product_heading, isi_bottom, isi_top, charge_dtm, mill, grade, 
+		 url_apikey, weight, section, date, user_id, status, 
+		 is_duplicate, created_at, updated_at 
+		 FROM labels WHERE id = $1`,
+		labelUUID,
+	).Scan(
+		&label.ID, &label.LabelID, &label.Location, &label.BundleNo, &label.PQD,
+		&label.Unit, &label.Time, &label.Length, &label.HeatNo, &label.ProductHeading,
+		&label.IsiBottom, &label.IsiTop, &label.ChargeDtm, &label.Mill, &label.Grade,
+		&label.UrlApikey, &label.Weight, &label.Section, &label.Date,
+		&label.UserID, &label.Status, &label.IsDuplicate,
+		&label.CreatedAt, &label.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Label not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch label"})
+		return
+	}
+
+	c.JSON(http.StatusOK, label)
+}
+
+// RetryPrintJob retries a failed print job
+func RetryPrintJob(c *gin.Context) {
+    var request struct {
+        JobID string `json:"job_id" binding:"required"`
+    }
+
+    if err := c.ShouldBindJSON(&request); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+        return
+    }
+
+    user, _ := c.Get("user")
+    userModel := user.(models.User)
+
+    // Parse job ID
+    jobUUID, err := uuid.Parse(request.JobID)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid print job ID"})
+        return
+    }
+
+    // Update print job status and increment retry count
+    _, err = db.DB.Exec(
+        `UPDATE print_jobs
+         SET status = 'pending', retry_count = retry_count + 1, updated_at = NOW()
+         WHERE id = $1 AND user_id = $2`,
+        jobUUID, userModel.ID,
+    )
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retry print job"})
+        return
+    }
+
+   
+    // if err != nil {
+    //     c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch updated print job"})
+    //     return
+    // }
+
+    // Log audit
+    utils.LogAudit(c, userModel.ID, "retry_print_job", "print_jobs", &request.JobID, "Print job retry initiated")
+
+    // Return updated job
+    c.JSON(http.StatusOK, gin.H{"message": "Print job retry initiated"})
+}
+
+
+// ExportPrintJobsCSV exports print jobs as CSV
+func ExportPrintJobsCSV(c *gin.Context) {
+	userVal, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userModel, ok := userVal.(models.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user object"})
+		return
+	}
+
+	// Build query for print jobs
+	query := `SELECT id, label_id, user_id, status, max_retries, retries, 
+		 created_at, updated_at, actual_label_id
+			  FROM print_jobs WHERE 1=1`
+	args := []interface{}{}
+
+	// Add user filter for non-admin users
+	if userModel.Role != "admin" {
+		query += " AND user_id = $1"
+		args = append(args, userModel.ID)
+	}
+
+	// Add optional status filter
+	if status := c.Query("status"); status != "" {
+		if userModel.Role != "admin" {
+			query += " AND status = $2"
+		} else {
+			query += " AND status = $1"
+		}
+		args = append(args, status)
+	}
+
+	query += " ORDER BY created_at DESC"
+
+	log.Printf("Running Print Jobs Export Query: %s", query)
+	log.Printf("With Args: %v", args)
+
+	rows, err := db.DB.Query(query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to fetch print jobs for export",
+			"details": err.Error(),
+		})
+		return
+	}
+	defer rows.Close()
+
+	csvData := utils.GeneratePrintJobsCSV(rows)
+
+	if len(csvData) == 0 {
+		c.JSON(http.StatusNoContent, gin.H{"message": "No print jobs data to export"})
+		return
+	}
+
+	c.Header("Content-Type", "text/csv")
+	c.Header("Content-Disposition", "attachment; filename=print_jobs.csv")
+
+	utils.LogAudit(c, userModel.ID, "export_csv", "print_jobs", nil, "Exported print jobs to CSV")
+
+	c.Data(http.StatusOK, "text/csv", []byte(csvData))
 }

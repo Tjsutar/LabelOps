@@ -1,0 +1,79 @@
+<section class="bg-white shadow-md rounded-xl p-6 space-y-5 max-w-3xl mx-auto">
+  <header
+    class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4"
+  >
+    <!-- Path Selection -->
+    <div class="space-y-3">
+      <select
+        [(ngModel)]="pathOption"
+        class="border border-gray-300 rounded-lg px-3 py-2 w-full"
+      >
+        <option value="default">Use Default Path</option>
+        <option value="custom">Enter Custom Path</option>
+      </select>
+
+      <input
+        *ngIf="pathOption === 'custom'"
+        [(ngModel)]="jsonUrl"
+        type="text"
+        placeholder="Enter custom path"
+        class="border border-gray-300 rounded-lg px-3 py-2 w-full"
+      />
+    </div>
+    <!-- Response message -->
+    <div *ngIf="responseMessage" class="flex items-center gap-2 text-sm">
+      <svg
+        *ngIf="responseMessage.startsWith('✅')"
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 text-green-600"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 011.414-1.414L8.414 12.586l7.293-7.293a1 1 0 011.414 0z"
+          clip-rule="evenodd"
+        />
+      </svg>
+      <svg
+        *ngIf="responseMessage.startsWith('❌')"
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 text-red-600"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-10.707a1 1 0 00-1.414-1.414L10 8.586 7.707 6.293a1 1 0 00-1.414 1.414L8.586 10l-2.293 2.293a1 1 0 001.414 1.414L10 11.414l2.293 2.293a1 1 0 001.414-1.414L11.414 10l2.293-2.293z"
+          clip-rule="evenodd"
+        />
+      </svg>
+      <span
+        [ngClass]="{
+       'text-green-600 font-medium': responseMessage.startsWith('✅'),
+      'text-red-600 font-medium': responseMessage.startsWith('❌')
+    }"
+      >
+        {{ responseMessage }}
+      </span>
+    </div>
+    <button
+      (click)="fetchAndUpload()"
+      [disabled]="pathOption === 'custom' && !jsonUrl"
+      class="inline-flex items-center justify-center px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-4 w-4 mr-2"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+      >
+        <path
+          d="M3 4a1 1 0 011-1h3a1 1 0 010 2H5v11h10V5h-2a1 1 0 110-2h3a1 1 0 011 1v13a1 1 0 01-1 1H4a1 1 0 01-1-1V4z"
+        />
+        <path d="M9 8a1 1 0 012 0v5a1 1 0 11-2 0V8z" />
+      </svg>
+      Print Labels
+    </button>
+  </header>
+</section>

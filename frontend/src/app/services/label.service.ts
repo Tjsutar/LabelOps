@@ -75,7 +75,7 @@ export class LabelService {
     return this.http.get<any>(`${environment.apiUrl}/print-jobs/${id}`);
   }
 
-  retryPrintJob(id: string): Observable<any> {
+  retryPrintJob(id: string, ): Observable<any> {
     return this.http.post<any>(`${environment.apiUrl}/print-jobs/retry`, { job_id: id });
   }
 

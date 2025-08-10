@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS labels (
 CREATE TABLE IF NOT EXISTS print_jobs (
 	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	label_id UUID NOT NULL REFERENCES labels(id),
+	actual_label_id VARCHAR(255) NOT NULL,
 	user_id UUID NOT NULL REFERENCES users(id),
 	status VARCHAR(50) NOT NULL DEFAULT 'success',
 	error_message TEXT,

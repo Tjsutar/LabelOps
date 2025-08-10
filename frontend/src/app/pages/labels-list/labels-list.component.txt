@@ -1,16 +1,16 @@
 import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
 import { LabelService } from "../../services/label.service";
 import { Label, LabelData } from "../../models/label.model";
 import { LabelComponent } from "../../components/label/label.component";
 import { ToastService } from "../../services/toast.service";
 import { PrintLabelsComponent } from "../print-labels/print-labels.component";
+import { FormsModule } from "@angular/forms";
 
 @Component({
   selector: "app-labels-list",
   standalone: true,
-  imports: [CommonModule, FormsModule, LabelComponent, PrintLabelsComponent],
+  imports: [CommonModule, LabelComponent, PrintLabelsComponent, FormsModule],
   templateUrl: "./labels-list.component.html",
 })
 export class LabelsListComponent implements OnInit {
@@ -28,6 +28,7 @@ export class LabelsListComponent implements OnInit {
 
   ngOnInit() {
     this.loadLabels();
+    
   }
 
   loadLabels() {
@@ -36,21 +37,25 @@ export class LabelsListComponent implements OnInit {
 
     this.labelService.getLabels().subscribe({
       next: (response: any) => {
-        // Ensure it's an array
-        this.labels = Array.isArray(response.labels)
-          ? response.labels
-          : Array.isArray(response)
-          ? response
-          : [];
+        this.labels = response.labels || response;
+        console.log("Frontend: Loaded labels:", this.labels);
+        if (this.labels.length > 0) {
+          console.log("Frontend: First label structure:", this.labels[0]);
+          console.log("Frontend: First label id field:", this.labels[0].id);
+          console.log(
+            "Frontend: First label label_id field:",
+            this.labels[0].label_id
+          );
+        }
         this.loading = false;
       },
-      error: () => {
+      error: (err) => {
         this.error = "Failed to load labels. Please try again.";
         this.loading = false;
+        console.error("Error loading labels:", err);
       },
     });
   }
-
 
   printLabel(labelId: string | undefined) {
     if (!labelId) {
