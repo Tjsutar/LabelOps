@@ -3,7 +3,7 @@ import { CommonModule } from "@angular/common";
 import { LabelService } from "../../services/label.service";
 import { ToastService } from "../../services/toast.service";
 import { PrinterService } from "src/app/services/printer.service";
-import { SearchByIdComponent } from "src/app/components/search-by-id.component";
+import { SearchByIdComponent } from "src/app/pages/print-jobs/search-by-id.component";
 
 interface PrintJob {
   id: string;
@@ -140,6 +140,20 @@ export class PrintJobsComponent implements OnInit {
       error: (error) => {
         console.error("Error getting default printer:", error);
       },
+    });
+  }
+
+  searchById(id: string) {
+    this.labelService.getPrintJobById(id).subscribe({
+      next: (response: any) => {
+        // if API returns single object, wrap in array so table renders correctly
+        this.printJobs = Array.isArray(response) ? response : [response];
+        this.toastService.success('Print job found successfully!');
+      },
+      error: (error) => {
+        this.toastService.error('Error getting print job');
+        console.error('Error getting print job:', error);
+      }
     });
   }
 }

@@ -1,20 +1,20 @@
 <div class="p-5 max-w-7xl mx-auto">
   <!-- Header -->
+  <app-search-by-id (searchIdEvent)="searchById($event)"></app-search-by-id>
   <div class="flex justify-between items-center mb-5">
-    <h2 class="text-2xl font-bold text-gray-800">Print Jobs</h2>
-    <app-search-by-id></app-search-by-id>
+    <h2 class="text-xl font-semibold text-gray-800 ml-4">Print Jobs</h2>
     <div class="flex gap-3">
       <button
         (click)="exportPrintJobs()"
         [disabled]="loading || exporting"
-        class="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
+        class="px-4 py-2 bg-green-600 text-white rounded shadow-sm cursor-pointer text-xs font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
       >
         {{ exporting ? "Exporting..." : "Export CSV" }}
       </button>
       <button
         (click)="loadPrintJobs()"
         [disabled]="loading"
-        class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
+        class="px-4 py-2 bg-blue-600 text-white rounded shadow-sm cursor-pointer text-xs font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
       >
         {{ loading ? "Loading..." : "Refresh" }}
       </button>
@@ -34,7 +34,7 @@
     <p>{{ error }}</p>
     <button
       (click)="loadPrintJobs()"
-      class="bg-red-600 text-white px-3 py-1 rounded mt-2 hover:bg-red-700"
+      class="bg-red-600 text-white px-3 py-1 rounded shadow-sm cursor-pointer text-xs font-medium mt-2 hover:bg-red-700"
     >
       Try Again
     </button>
@@ -48,12 +48,10 @@
     <div class="overflow-x-auto">
       <table class="w-full border-collapse">
         <thead
-          class="sticky top-0 z-10 bg-gray-100 text-xs font-bold text-gray-600 uppercase tracking-wider"
+          class="sticky top-0 z-10 bg-gray-200 text-xs font-bold text-gray-600 uppercase tracking-wider"
         >
           <tr>
-            <!-- <th class="px-3 py-3 text-left">Job ID</th> -->
             <th class="px-3 py-3 text-left">Label ID</th>
-            <!-- <th class="px-3 py-3 text-left">Status</th> -->
             <th class="px-3 py-3 text-left">Retries</th>
             <th class="px-3 py-3 text-left">Created</th>
             <th class="px-3 py-3 text-left">Updated</th>
@@ -66,30 +64,18 @@
             class="border-b border-gray-200 hover:bg-gray-50 text-xs"
           >
             <td class="px-3 py-3">{{ job.actual_label_id }}</td>
-            <!-- <td class="px-3 py-3">
-              <span
-                [class]="
-                      'font-medium px-2 py-1 rounded text-xs ' +
-                      getStatusClass(job.status)
-                    "
-              >
-                {{ job.status }}
-              </span>
-            </td> -->
-            <td class="px-3 py-3">
-              {{ job.retry_count }}
-            </td>
+            <td class="px-3 py-3">{{ job.retry_count }}</td>
             <td class="px-3 py-3">{{ formatDate(job.created_at) }}</td>
             <td class="px-3 py-3">{{ formatDate(job.updated_at) }}</td>
             <td class="px-3 py-3">
               <div class="flex gap-2 flex-wrap">
-                <button
+                <button 
                   *ngIf="
                         job.status === 'failed' &&
                         job.retry_count < job.max_retries
                       "
                   (click)="retryPrintJob(job.id)"
-                  class="px-3 py-1 bg-yellow-600 text-white rounded text-xs hover:bg-yellow-700"
+                  class="px-3 py-1 bg-yellow-600 text-white rounded shadow-sm cursor-pointer text-xs font-medium hover:bg-yellow-700"
                 >
                   Retry
                 </button>
@@ -102,8 +88,8 @@
                 <button
                   (click)="retryPrintJob(job.id)"
                   [disabled]="loading || !job.actual_label_id"
-                  class="px-3 py-1 bg-blue-600 text-white border-none rounded cursor-pointer text-xs hover:bg-blue-700">
-                  
+                  class="px-3 py-1 bg-blue-600 text-white border-none rounded cursor-pointer text-xs hover:bg-blue-700"
+                >
                   Re-Print
                 </button>
               </div>

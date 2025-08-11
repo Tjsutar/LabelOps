@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as QRCode from 'qrcode';
+// import { LabelData } from '../../models/label.model';
 import { LabelData } from '../../models/label.model';
 
 @Component({
@@ -18,7 +19,8 @@ import { LabelData } from '../../models/label.model';
   templateUrl: './label.html',
 })
 export class LabelComponent implements AfterViewInit, OnChanges {
-  @Input() labelData!: LabelData;   
+  @Input() labelData!: LabelData; 
+    
 
   @Input() qrUrl: string = '';
 

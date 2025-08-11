@@ -547,56 +547,67 @@ func GetLabels(c *gin.Context) {
 }
 
 // GetPrintJobByID retrieves a specific print job
+
+
+// GetPrintJobByID retrieves a specific print job with debug logs
 func GetPrintJobByID(c *gin.Context) {
-	jobID := c.Param("id")
+    jobID := c.Param("id")
 
-	// Parse job ID
-	jobUUID, err := uuid.Parse(jobID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid print job ID"})
-		return
-	}
+    if jobID == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid print job ID"})
+        return
+    }
 
-	// Get print job
-	var (
-		id, labelID, userID, status, zplContent, errorMessage string
-		maxRetries, retryCount                                int
-		createdAt, updatedAt                                  sql.NullTime
-	)
-	err = db.DB.QueryRow(
-		`SELECT id, label_id, user_id, status, zpl_content, max_retries, 
-		 retry_count, error_message, created_at, updated_at 
-		 FROM print_jobs WHERE id = $1`,
-		jobUUID,
-	).Scan(
-		&id, &labelID, &userID, &status, &zplContent, &maxRetries, &retryCount,
-		&errorMessage, &createdAt, &updatedAt,
-	)
+    query := `
+        SELECT id, label_id, user_id, status, zpl_content, max_retries, 
+               retry_count, error_message, actual_label_id, created_at, updated_at 
+        FROM print_jobs WHERE actual_label_id = $1
+    `
 
-	if err != nil {
-		if err == sql.ErrNoRows {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Print job not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch print job"})
-		return
-	}
+    fmt.Println("Executing SQL Query:", query)
+    fmt.Println("With Parameter jobID:", jobID)
 
-	job := map[string]interface{}{
-		"id":            id,
-		"label_id":      labelID,
-		"user_id":       userID,
-		"status":        status,
-		"zpl_content":   zplContent,
-		"max_retries":   maxRetries,
-		"retry_count":   retryCount,
-		"error_message": errorMessage,
-		"created_at":    createdAt.Time,
-		"updated_at":    updatedAt.Time,
-	}
+    var (
+        id, labelID, userID, status, zplContent string
+        maxRetries, retryCount                   int
+        errorMessage                            sql.NullString
+        actualLabelID                          sql.NullString
+        createdAt, updatedAt                    sql.NullTime
+    )
 
-	c.JSON(http.StatusOK, job)
+    err := db.DB.QueryRow(query, jobID).Scan(
+        &id, &labelID, &userID, &status, &zplContent, &maxRetries, &retryCount,
+        &errorMessage, &actualLabelID, &createdAt, &updatedAt,
+    )
+
+    if err != nil {
+        fmt.Println("Error querying print job:", err)
+        if err == sql.ErrNoRows {
+            c.JSON(http.StatusNotFound, gin.H{"error": "Print job not found"})
+            return
+        }
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch print job"})
+        return
+    }
+
+    job := map[string]interface{}{
+        "id":              id,
+        "label_id":        labelID,
+        "user_id":         userID,
+        "status":          status,
+        "zpl_content":     zplContent,
+        "max_retries":     maxRetries,
+        "retry_count":     retryCount,
+        "error_message":   nilIfInvalidString(errorMessage),
+        "actual_label_id": nilIfInvalidString(actualLabelID),
+        "created_at":      nilIfInvalidTime(createdAt),
+        "updated_at":      nilIfInvalidTime(updatedAt),
+    }
+
+    c.JSON(http.StatusOK, job)
 }
+
+
 
 // PrintLabel prints a specific label
 func PrintLabel(c *gin.Context) {

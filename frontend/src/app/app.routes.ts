@@ -5,7 +5,7 @@ import { adminGuard } from './guards/admin.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/dashboard',
+    redirectTo: 'dashboard',
     pathMatch: 'full'
   },
   {
@@ -21,8 +21,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard]
   },
+  // {
+  //   path: 'labels',
+  //   redirectTo: 'labels-list',
+  //   pathMatch: 'full'
+  // },
   {
-    path: 'labels',
+    path: 'labels-list',
     loadComponent: () => import('./pages/labels-list/labels-list.component').then(m => m.LabelsListComponent),
     canActivate: [authGuard]
   },
@@ -38,6 +43,11 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
+    redirectTo: 'print-labels',
+    pathMatch: 'full'
+  },
+  {
+    path: 'print-labels',
     loadComponent: () => import('./pages/print-labels/print-labels.component').then(m => m.PrintLabelsComponent),
     canActivate: [authGuard, adminGuard]
   },
@@ -52,6 +62,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: '/dashboard'
+    redirectTo: 'labels-list'
   }
-]; 
+];

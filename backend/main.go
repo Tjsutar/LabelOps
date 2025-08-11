@@ -67,7 +67,6 @@ func main() {
 
 			// Label routes
 			protected.POST("/labels/batch", controllers.BatchLabelProcess)
-			// protected.POST("/labels/batch", controllers.BatchLabelProcessHandler)
 			protected.GET("/labels", controllers.GetLabels)
 			protected.GET("/labels/:id", controllers.GetLabelByID)
 			protected.POST("/labels/print", controllers.PrintLabel)
