@@ -159,7 +159,7 @@ func GetDashboardStats(c *gin.Context) {
 	}
 
 	// Printed labels count (status = 'printed')
-	err = db.DB.QueryRow("SELECT COUNT(*) FROM labels WHERE status = 'printed'").Scan(&printedLabels)
+	err = db.DB.QueryRow("SELECT COUNT(*) FROM labels WHERE status = 'success'").Scan(&printedLabels)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get printed labels count"})
 		return

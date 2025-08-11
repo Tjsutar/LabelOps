@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* @import url('./assets/fonts/fonts.css'); */
 
 /* Custom font faces */
 @font-face {
@@ -11,6 +12,25 @@
   font-weight: bold;
   font-style: normal;
 }
+
+.theme-text {
+  font-family: 'Roboto', 'Lato', 'Open Sans', sans-serif;
+}
+
+.theme-bold {
+  font-weight: bold;
+}
+
+.font-roboto {
+  font-family: 'Roboto', sans-serif;
+}
+.font-lato {
+  font-family: 'Lato', sans-serif;
+}
+.font-open-sans {
+  font-family: 'Open Sans', sans-serif;
+}
+
 
 @font-face {
   font-family: 'EBGaramond';

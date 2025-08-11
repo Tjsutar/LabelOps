@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { 
-  LabelData, 
+  LabelData,
   Label, 
   LabelBatchRequest, 
   LabelBatchResponse, 
@@ -19,6 +19,11 @@ export class LabelService {
 
   processBatch(batchRequest: LabelBatchRequest): Observable<LabelBatchResponse> {
     return this.http.post<LabelBatchResponse>(`${environment.apiUrl}/labels/batch`, batchRequest);
+  }
+
+
+  getLabelData(): Observable<LabelData[]> {
+    return this.http.get<LabelData[]>(`${environment.apiUrl}/labels`);
   }
 
   getLabels(filter?: LabelFilter): Observable<{ labels: Label[], count: number }> {
@@ -96,6 +101,13 @@ export class LabelService {
   getStats(): Observable<LabelStats> {
     return this.http.get<LabelStats>(`${environment.apiUrl}/admin/stats`);
   }
+
+  async fetchLabels(): Promise<LabelData[]> {
+    const res = await fetch('/api/labels');
+    const data: LabelData[] = await res.json();
+    return data;
+  }
+
 
   // Helper method to download CSV
   downloadCSV(blob: Blob, filename: string): void {

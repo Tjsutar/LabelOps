@@ -39,42 +39,41 @@
     </div>
   </div>
 
-  <!-- Section Title -->
-  <div class="text-center font-bold text-[18px] border-2 border-black mt-2 mb-1 label-heading">
-    {{ labelData.PRODUCT_HEADING || 'CHANNEL' }}
+  <div class="text-center font-bold text-[18px] border-2 border-black mt-2 mb-1 label-heading font-roboto">
+    {{ labelData.product_heading || 'CHANNEL' }}
   </div>
-
+  
   <!-- Label Info & QR -->
-  <div class="flex justify-around w-auto h-auto bg-white text-black">
+  <div class="flex justify-around w-auto h-auto bg-white text-black font-open-sans">
     <div>
       <!-- HEAT NO. -->
-      <div class="font-bold text-[20px] label-bold leading-none">
-        <div class="font-bold leading-none text-[18px] label-condensed">HEAT NO.</div>
-        <div class="font-bold leading-none text-[18px] label-bold">{{ labelData.HEAT_NO || 'C103262' }}</div>
+      <div class="font-bold text-[20px] leading-none font-lato">
+        <div class="font-bold leading-none text-[18px] font-roboto">HEAT NO.</div>
+        <div class="font-bold leading-none text-[18px] font-lato">{{ labelData.heat_no || 'C103262' }}</div>
       </div>
-
+  
       <!-- SECTION -->
-      <div class="mt-3 text-[14px] label-bold leading-none">
-        <div class="font-bold leading-none text-[18px] label-condensed">SECTION</div>
-        <div class="font-bold leading-none text-[18px] label-bold">{{ labelData.SECTION || 'CHANNEL 75*40*4.8' }}</div>
+      <div class="mt-3 text-[14px] leading-none font-lato">
+        <div class="font-bold leading-none text-[18px] font-roboto">SECTION</div>
+        <div class="font-bold leading-none text-[18px] font-lato">{{ labelData.section || 'CHANNEL 75*40*4.8' }}</div>
       </div>
-
+  
       <!-- GRADE -->
-      <div class="mt-3 leading-none label-bold">
-        <div class="font-bold text-[18px] label-condensed">GRADE</div>
-        <div class="font-bold text-[18px] label-bold">{{ labelData.GRADE || 'IS 2062 EZSOBR' }}</div>
+      <div class="mt-3 leading-none font-lato">
+        <div class="font-bold text-[18px] font-roboto">GRADE</div>
+        <div class="font-bold text-[18px] font-lato">{{ labelData.grade || 'IS 2062 EZSOBR' }}</div>
       </div>
-
+  
       <!-- ID -->
-      <div class="mt-3 leading-[16px] label-bold">
-        <div class="font-bold text-[12px] label-condensed">ID</div>
-        <div class="font-bold text-[14px] label-bold">{{ labelData.ID || '2025014374' }}</div>
+      <div class="mt-3 leading-[16px] font-lato">  
+        <div class="font-bold text-[12px] font-roboto">ID</div>
+        <div class="font-bold text-[14px] font-lato">{{ labelData.label_id || '' }}</div>
       </div>
     </div>
-
+  
     <!-- ISI logo and info -->
-    <div class="flex flex-col leading-none label-bold mt-1.5">
-      <div class="font-bold ml-0.5 text-[9px] label-condensed">{{ labelData.ISI_TOP || 'IS 2062.2011' }}</div>
+    <div class="flex flex-col leading-none mt-1.5 font-lato">
+      <div class="font-bold ml-0.5 text-[9px] font-roboto">{{ labelData.isi_top || 'IS 2062.2011' }}</div>
       <div class="flex items-center justify-center ml-1 w-14 h-10">
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Isi_mark.svg/1200px-Isi_mark.svg.png"
@@ -82,9 +81,9 @@
           class="w-full h-full object-contain"
         />
       </div>
-      <div class="font-bold ml-1 text-[9px] label-condensed">{{ labelData.ISI_BOTTOM || 'CML 57534' }}</div>
+      <div class="font-bold ml-1 text-[9px] font-roboto">{{ labelData.isi_bottom || 'CML 57534' }}</div>
     </div>
-
+  
     <!-- First QR Code -->
     <div>
       <canvas
@@ -93,12 +92,12 @@
       ></canvas>
     </div>
   </div>
-
+  
   <!-- Spacer -->
   <div class="h-0 mt-2 border border-gray-800"></div>
-
+  
   <!-- Footer Info -->
-  <div class="flex justify-between space-x-2">
+  <div class="flex justify-between space-x-2 font-open-sans">
     <!-- Second QR Code -->
     <div class="mt-2">
       <canvas
@@ -106,20 +105,19 @@
         class="h-32 w-32 object-contain"
       ></canvas>
     </div>
-
+  
     <!-- Footer Text Info -->
     <div class="flex flex-col w-52 mt-2">
-      <div class="text-lg mb-2 mt-1 font-bold text-center label-heading">{{ labelData.MILL || 'MM' }}</div>
-      <div
-        class="ml-5 text-[10px] grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 font-bold label-condensed"
-      >
+      <div class="text-lg mb-2 mt-1 font-bold text-center font-roboto">{{ labelData.mill || 'MM' }}</div>
+      <div class="ml-5 text-[10px] grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 font-bold font-lato">
         <div>LENGTH</div>
-        <div>: {{ labelData.LENGTH || '12000' }}</div>
+        <div>: {{ labelData.length || '12000' }}</div>
         <div>DATE</div>
-        <div>: {{ labelData.DATE1 || '25-JUN-25' }}</div>
+        <div>: {{ labelData.date || '25-JUN-25' }}</div>
         <div>TIME</div>
-        <div>: {{ labelData.TIME || '04:48' }}</div>
+        <div>: {{ labelData.time || '04:48' }}</div>
       </div>
     </div>
   </div>
+  
 </div>

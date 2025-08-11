@@ -17,7 +17,7 @@ export class LabelsListComponent implements OnInit {
   labels: Label[] = [];
   loading = true;
   error: string | null = null;
-  selectedLabel: LabelData | null = null;
+  selectedLabel: Label | LabelData | null = null;
   showLabelPreview = false;
   exporting = false;
 
@@ -85,34 +85,19 @@ export class LabelsListComponent implements OnInit {
   }
 
   printSelectedLabel() {
-    if (this.selectedLabel?.ID) {
-      this.printLabel(this.selectedLabel.ID);
+    const anyLabel: any = this.selectedLabel as any;
+    const id: string | undefined = anyLabel?.id || anyLabel?.ID;
+    if (id) {
+      this.printLabel(id);
       this.closeLabelPreview();
+    } else {
+      this.toastService.error("Label ID is missing! Cannot print label.");
     }
   }
 
-  previewLabel(label: any) {
-    // Convert the label data to the format expected by the label component
-    this.selectedLabel = {    
-      actual_label_id: label.actual_label_id,
-      label_id: label.id || label.label_id,
-      ID: label.id || label.ID,
-      HEAT_NO: label.HEAT_NO || label.heat_no,
-      PRODUCT_HEADING: label.PRODUCT_HEADING || label.product_heading,
-      SECTION: label.SECTION || label.section,
-      GRADE: label.GRADE || label.grade,
-      ISI_TOP: label.ISI_TOP || label.isi_top,
-      ISI_BOTTOM: label.ISI_BOTTOM || label.isi_bottom,
-      MILL: label.MILL || label.mill,
-      DATE1: label.DATE1 || label.date1,
-      TIME: label.TIME || label.time1,
-      LENGTH: label.LENGTH || label.length,
-      BUNDLE_NO: label.BUNDLE_NO || label.bundle_no,
-      PQD: label.PQD || label.pqd,
-      UNIT: label.UNIT || label.unit,
-      CHARGE_DTM: label.CHARGE_DTM || label.charge_dtm,
-      URL_APIKEY: label.URL_APIKEY || label.url_apikey,
-    };
+  previewLabel(label: Label | LabelData) {
+    // Use the row data directly; LabelComponent will normalize it
+    this.selectedLabel = label;
     this.showLabelPreview = true;
   }
 
