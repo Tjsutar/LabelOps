@@ -1,5 +1,5 @@
 <div class="p-5 max-w-7xl mx-auto">
-  <app-print-labels></app-print-labels>
+  <app-print-labels (refresh)="loadLabels(true)"></app-print-labels>
   <!-- Actions -->
   
   <div class="flex justify-between items-center mb-5 mt-5">
@@ -13,7 +13,7 @@
         {{ exporting ? "Exporting..." : "Export CSV" }}
       </button>
       <button
-        (click)="loadLabels()"
+        (click)="loadLabels(true)"
         [disabled]="loading"
         class="px-4 py-2 bg-blue-600 text-white rounded shadow-sm cursor-pointer text-xs font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
       >
@@ -47,6 +47,10 @@
     *ngIf="!loading && !error"
     class="bg-white rounded-xl shadow-lg overflow-hidden"
   >
+    <div class="flex items-center justify-between px-4 py-2 text-xs text-gray-600 bg-gray-50 border-b">
+      <!-- <div>Total: {{ totalCount || labels.length }}</div> -->
+      <div>Loaded: {{ labels.length }}</div>
+    </div>
     <div class="max-h-[500px] overflow-y-auto">
       <table class="min-w-full border-collapse">
         <thead
@@ -119,6 +123,11 @@
       class="text-center py-10 text-gray-500 text-sm animate-fade-in"
     >
       <p>No labels found.</p>
+    </div>
+
+    <!-- Load More Footer -->
+    <div class="flex items-center justify-center p-3 border-t bg-gray-50" *ngIf="labels.length > 0">
+      
     </div>
   </div>
 

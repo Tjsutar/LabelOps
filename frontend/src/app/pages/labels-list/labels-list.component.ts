@@ -20,6 +20,11 @@ export class LabelsListComponent implements OnInit {
   selectedLabel: Label | LabelData | null = null;
   showLabelPreview = false;
   exporting = false;
+  // Pagination state
+  pageSize = 8;
+  offset = 0;
+  totalCount = 0;
+  loadingMore = false;
 
   constructor(
     private labelService: LabelService,
@@ -30,23 +35,33 @@ export class LabelsListComponent implements OnInit {
     this.loadLabels();
   }
 
-  loadLabels() {
-    this.loading = true;
+  loadLabels(reset: boolean = true) {
+    if (reset) {
+      this.loading = true;
+      this.offset = 0;
+      this.labels = [];
+    } else {
+      this.loadingMore = true;
+    }
     this.error = null;
 
-    this.labelService.getLabels().subscribe({
-      next: (response: any) => {
-        // Ensure it's an array
-        this.labels = Array.isArray(response.labels)
-          ? response.labels
-          : Array.isArray(response)
-          ? response
-          : [];
+    const limit = this.pageSize && this.pageSize > 0 ? this.pageSize : undefined;
+    this.labelService.getLabels({ limit, offset: this.offset }).subscribe({
+      next: (response: { labels: Label[]; count: number }) => {
+        const chunk = Array.isArray(response?.labels) ? response.labels : [];
+        this.totalCount = Number(response?.count ?? (this.offset + chunk.length));
+
+        // Append new chunk
+        this.labels = [...this.labels, ...chunk];
+        this.offset += chunk.length;
+
         this.loading = false;
+        this.loadingMore = false;
       },
       error: () => {
         this.error = "Failed to load labels. Please try again.";
         this.loading = false;
+        this.loadingMore = false;
       },
     });
   }
@@ -139,4 +154,15 @@ export class LabelsListComponent implements OnInit {
         return "bg-gray-100 text-gray-800";
     }
   }
+
+  canLoadMore(): boolean {
+    return this.offset < this.totalCount && !this.loading && !this.loadingMore;
+  }
+
+  loadMore() {
+    if (!this.canLoadMore()) return;
+    this.loadLabels(false);
+  }
+
+ 
 }

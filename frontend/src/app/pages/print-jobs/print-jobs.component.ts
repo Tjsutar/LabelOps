@@ -33,6 +33,8 @@ export class PrintJobsComponent implements OnInit {
   showZPLModal = false;
   selectedZPL = "";
   exporting = false;
+  // Limit max entries shown on UI
+  maxEntries = 8;
 
   constructor(
     private labelService: LabelService,
@@ -51,7 +53,8 @@ export class PrintJobsComponent implements OnInit {
 
     this.labelService.getPrintJobs().subscribe({
       next: (response: any) => {
-        this.printJobs = response.print_jobs || response;
+        const list = response.print_jobs || response;
+        this.printJobs = Array.isArray(list) ? list.slice(0, this.maxEntries) : [];
         this.loading = false;
       },
       error: (err) => {
@@ -147,7 +150,8 @@ export class PrintJobsComponent implements OnInit {
     this.labelService.getPrintJobById(id).subscribe({
       next: (response: any) => {
         // if API returns single object, wrap in array so table renders correctly
-        this.printJobs = Array.isArray(response) ? response : [response];
+        const list = Array.isArray(response) ? response : [response];
+        this.printJobs = list.slice(0, this.maxEntries);
         this.toastService.success('Print job found successfully!');
       },
       error: (error) => {
