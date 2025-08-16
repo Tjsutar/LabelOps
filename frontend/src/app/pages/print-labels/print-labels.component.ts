@@ -19,12 +19,24 @@ export class PrintLabelsComponent {
 
   constructor(private http: HttpClient) {}
 
+  private mapIncomingData(data: any[]): any[] {
+    if (!Array.isArray(data)) return [];
+    return data.map((item: any) => {
+      // Map DATE1 -> DATE; keep other fields as-is
+      const mapped: any = { ...item };
+      if (mapped.DATE1 && !mapped.DATE) {
+        mapped.DATE = mapped.DATE1;
+      }
+      return mapped;
+    });
+  }
+
   async fetchJson() {
     // Use custom URL only if pathOption is 'custom' and jsonUrl is set
     const url =
       this.pathOption === "custom" && this.jsonUrl
         ? this.jsonUrl
-        : "/assets/dummy_data.json";
+        : "/assets/mmnew.json";
 
     console.log("Fetching JSON from:", url);
     
@@ -35,10 +47,11 @@ export class PrintLabelsComponent {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      console.log("Fetched JSON data:", data);
+      const raw = await response.json();
+      console.log("Fetched JSON data:", raw);
+      const data = this.mapIncomingData(raw);
       this.jsonData = data;
-      if (data.length === 0) {
+      if (!Array.isArray(data) || data.length === 0) {
         this.responseMessage = "❌ No data found in JSON file";
         return null;
       }
@@ -81,10 +94,13 @@ export class PrintLabelsComponent {
       "Content-Type": "application/json",
     });
   
-    console.log("Sending payload:", jsonData);
-  
+    // Backend expects { labels: [...] }
+    const payload = { labels: Array.isArray(jsonData) ? jsonData : [] };
+
+    console.log("Sending payload:", payload);
+
     this.http
-      .post<any>("http://localhost:8080/api/v1/labels/batch", jsonData, { headers })
+      .post<any>("http://localhost:8080/api/v1/labels/batch", payload, { headers })
       .subscribe({
         next: (response) => {
           console.log("Upload successful:", response);
