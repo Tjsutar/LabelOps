@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 // safeString removes problematic ZPL chars
@@ -117,12 +116,22 @@ func generateQRData(label models.Label) string {
 
 // GenerateAndSaveZPL saves the generated ZPL to a file
 func GenerateAndSaveZPL(label models.Label) (string, error) {
-	zpl := GenerateLabelZPL(label)
-	filename := fmt.Sprintf("label_%s_%d.zpl", label.LabelID, time.Now().Unix())
-	path := filepath.Join("printers", "zpl", filename)
+    // Generate ZPL content
+    zpl := GenerateLabelZPL(label)
 
-	if err := os.WriteFile(path, []byte(zpl), 0644); err != nil {
-		return "", fmt.Errorf("failed to save ZPL file: %w", err)
-	}
-	return path, nil
+    // Create a temp file for ZPL (do not persist in repo folders)
+    tmpFile, err := os.CreateTemp("", fmt.Sprintf("label_%s_*.zpl", label.LabelID))
+    if err != nil {
+        return "", fmt.Errorf("failed to create temp ZPL file: %w", err)
+    }
+    defer tmpFile.Close()
+
+    if _, err := tmpFile.Write([]byte(zpl)); err != nil {
+        return "", fmt.Errorf("failed to write ZPL content: %w", err)
+    }
+
+    // Return absolute, normalized path
+    abs := tmpFile.Name()
+    abs = filepath.ToSlash(abs)
+    return abs, nil
 }

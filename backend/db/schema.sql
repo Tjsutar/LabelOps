@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS labels (
 CREATE TABLE IF NOT EXISTS print_jobs (
 	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	label_id UUID NOT NULL REFERENCES labels(id),
+	heat_no VARCHAR(100) NOT NULL,
 	actual_label_id VARCHAR(255) NOT NULL,
 	user_id UUID NOT NULL REFERENCES users(id),
 	status VARCHAR(50) NOT NULL DEFAULT 'success',
@@ -72,5 +73,11 @@ CREATE INDEX IF NOT EXISTS idx_labels_status ON labels(status);
 CREATE INDEX IF NOT EXISTS idx_labels_created_at ON labels(created_at);
 CREATE INDEX IF NOT EXISTS idx_print_jobs_status ON print_jobs(status);
 CREATE INDEX IF NOT EXISTS idx_print_jobs_user_id ON print_jobs(user_id);
+CREATE INDEX IF NOT EXISTS idx_print_jobs_heat_no ON print_jobs(heat_no);
+-- Composite index to speed up heat_no queries limited by recency
+CREATE INDEX IF NOT EXISTS idx_print_jobs_heat_no_created_at
+ON print_jobs (heat_no, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_print_jobs_label_id ON print_jobs(label_id);
+CREATE INDEX IF NOT EXISTS idx_print_jobs_actual_label_id ON print_jobs(actual_label_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);

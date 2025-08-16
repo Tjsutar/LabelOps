@@ -1,6 +1,7 @@
 <div class="p-5 max-w-7xl mx-auto">
   <!-- Header -->
-  <app-search-by-id (searchIdEvent)="searchById($event)"></app-search-by-id>
+  <!-- <app-search-by-id (searchIdEvent)="searchById($event)"></app-search-by-id> -->
+  <app-search-by (searchHeatnoEvent)="searchByHeatNo($event)"></app-search-by>
   <div class="flex justify-between items-center mb-5">
     <h2 class="text-xl font-semibold text-gray-800 ml-4">Print Jobs</h2>
     <div class="flex gap-3">
@@ -52,6 +53,7 @@
         >
           <tr>
             <th class="px-3 py-3 text-left">Label ID</th>
+            <th class="px-3 py-3 text-left">Heat No</th>
             <th class="px-3 py-3 text-left">Retries</th>
             <th class="px-3 py-3 text-left">Created</th>
             <th class="px-3 py-3 text-left">Updated</th>
@@ -64,6 +66,7 @@
             class="border-b border-gray-200 hover:bg-gray-50 text-xs"
           >
             <td class="px-3 py-3">{{ job.actual_label_id }}</td>
+            <td class="px-3 py-3">{{ job.heat_no }}</td>
             <td class="px-3 py-3">{{ job.retry_count }}</td>
             <td class="px-3 py-3">{{ formatDate(job.created_at) }}</td>
             <td class="px-3 py-3">{{ formatDate(job.updated_at) }}</td>

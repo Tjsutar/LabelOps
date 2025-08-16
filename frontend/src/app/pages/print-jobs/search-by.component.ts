@@ -3,22 +3,22 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-search-by-id',
+  selector: 'app-search-by',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
     <section class="bg-white shadow-md rounded-xl p-3 space-y-1 max-w-3xl mx-auto mb-5">
       <div class="flex gap-4">
         <input
-          [(ngModel)]="searchId"
+          [(ngModel)]="searchHeat"
           (keyup.enter)="onSearchClick()"
           type="text"
-          placeholder="Enter ID to search"
+          placeholder="Enter Heat No to search"
           class="flex-grow border border-gray-300 rounded-lg px-3 py-2 mr-4"
         />
         <button
           (click)="onSearchClick()"
-          [disabled]="!searchId.trim()"
+          [disabled]="!searchHeat.trim()"
           class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg
@@ -39,12 +39,17 @@ import { FormsModule } from '@angular/forms';
 })
 export class SearchByIdComponent {
   searchId = '';
-
+  searchHeat ='';
   @Output() searchIdEvent = new EventEmitter<string>();
+@Output() searchHeatnoEvent = new EventEmitter<string>();
 
   onSearchClick() {
-    if (this.searchId.trim()) {
-      this.searchIdEvent.emit(this.searchId.trim());
+    // if (this.searchId.trim()) {
+    //   this.searchIdEvent.emit(this.searchId.trim());
+    // }
+    if (this.searchHeat.trim()){
+      this.searchHeatnoEvent.emit((this.searchHeat.trim()))
     }
+
   }
 }

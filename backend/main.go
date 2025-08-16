@@ -75,6 +75,7 @@ func main() {
 			// Print job routes
 			protected.GET("/print-jobs", controllers.GetPrintJobs)
 			protected.GET("/print-jobs/:id", controllers.GetPrintJobByID)
+			protected.GET("/print-jobs/heatno/:heatno", controllers.GetPrintJobsByHeatNo)
 			protected.POST("/print-jobs/retry", controllers.RetryPrintJob)
 			protected.GET("/print-jobs/export/csv", controllers.ExportPrintJobsCSV)
 

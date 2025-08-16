@@ -3,13 +3,14 @@ import { CommonModule } from "@angular/common";
 import { LabelService } from "../../services/label.service";
 import { ToastService } from "../../services/toast.service";
 import { PrinterService } from "src/app/services/printer.service";
-import { SearchByIdComponent } from "src/app/pages/print-jobs/search-by-id.component";
+import { SearchByIdComponent } from "src/app/pages/print-jobs/search-by.component";
 
 interface PrintJob {
   id: string;
   label_id: string;
   user_id: string;
   actual_label_id: string;
+  heat_no: string;
   status: string;
   zpl_content: string;
   max_retries: number;
@@ -148,6 +149,21 @@ export class PrintJobsComponent implements OnInit {
 
   searchById(id: string) {
     this.labelService.getPrintJobById(id).subscribe({
+      next: (response: any) => {
+        // if API returns single object, wrap in array so table renders correctly
+        const list = Array.isArray(response) ? response : [response];
+        this.printJobs = list.slice(0, this.maxEntries);
+        this.toastService.success('Print job found successfully!');
+      },
+      error: (error) => {
+        this.toastService.error('Error getting print job');
+        console.error('Error getting print job:', error);
+      }
+    });
+  }
+
+  searchByHeatNo(heatNo: string) {
+    this.labelService.getPrintJobByHeatNo(heatNo).subscribe({
       next: (response: any) => {
         // if API returns single object, wrap in array so table renders correctly
         const list = Array.isArray(response) ? response : [response];

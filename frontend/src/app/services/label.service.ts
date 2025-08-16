@@ -46,6 +46,11 @@ export class LabelService {
     return this.http.get<Label>(`${environment.apiUrl}/labels/${id}`);
   }
 
+
+  getPrintJobByHeatNo(heatNo: string): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/print-jobs/heatno/${heatNo}`);
+  }
+
   printLabel(id: string): Observable<{ message: string, print_job_id: string, zpl_content: string }> {
     return this.http.post<{ message: string, print_job_id: string, zpl_content: string }>(
       `${environment.apiUrl}/labels/print`, 

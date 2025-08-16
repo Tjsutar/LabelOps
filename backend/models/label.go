@@ -22,7 +22,7 @@ type LabelData struct {
 	MILL            string  `json:"MILL"`
 	GRADE           string  `json:"GRADE"`
 	URL_APIKEY      string  `json:"URL_APIKEY"`
-	ID              string `json:"ID"`
+	ID              string  `json:"ID"`
 	WEIGHT          *string `json:"WEIGHT"`
 	SECTION         string  `json:"SECTION"`
 	DATE            string  `json:"DATE"`
@@ -95,11 +95,12 @@ type LabelStats struct {
 }
 
 type PrintJob struct {
-    ID            uuid.UUID  `db:"id" json:"id"`
-    LabelID       uuid.UUID  `db:"label_id" json:"label_id"`
-    ActualLabelID uuid.UUID  `db:"actual_label_id" json:"actual_label_id"`
-    Status        string     `db:"status" json:"status"`
-    RetryCount    int        `db:"retry_count" json:"retry_count"`
-    CreatedAt     time.Time  `db:"created_at" json:"created_at"`
-    UpdatedAt     time.Time  `db:"updated_at" json:"updated_at"`
+	ID            uuid.UUID `db:"id" json:"id"`
+	LabelID       uuid.UUID `db:"label_id" json:"label_id"`
+	HeatNo        string    `db:"heat_no" json:"heat_no"`
+	ActualLabelID uuid.UUID `db:"actual_label_id" json:"actual_label_id"`
+	Status        string    `db:"status" json:"status"`
+	RetryCount    int       `db:"retry_count" json:"retry_count"`
+	CreatedAt     time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt     time.Time `db:"updated_at" json:"updated_at"`
 }
